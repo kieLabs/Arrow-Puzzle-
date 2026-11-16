@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Arrow Escape: Find the Free Path</title>
+  <style>
+    :root {
+      --bg-main: #ffffff;
+      --bg-pill: #eff3f8;
+      --text-primary: #334155;
+      --text-title: #3b465e;
+      --text-muted: #64748b;
+      --accent-blue: #0284c7;
+      --accent-blue-light: #38bdf8;
+      --arrow-color: #0f1b33;
+      --arrow-hover: #1e3a8a;
+      --arrow-hint: #10b981;
+      --arrow-error: #ef4444;
+      --grid-line: rgba(148, 163, 184, 0.22);
+      --ray-guide: rgba(2, 132, 199, 0.22);
+      --card-bg: #ffffff;
+      --shadow-soft: 0 6px 20px rgba(15, 23, 42, 0.08);
+      --shadow-loupe: 0 12px 32px rgba(15, 23, 42, 0.25);
+      --modal-backdrop: rgba(15, 23, 42, 0.55);
+    }
+
+    body.dark-theme {
+      --bg-main: #0b1120;
+      --bg-pill: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-title: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent-blue: #38bdf8;
+      --accent-blue-light: #7dd3fc;
+      --arrow-color: #e2e8f0;
+      --arrow-hover: #38bdf8;
+      --arrow-hint: #34d399;
+      --arrow-error: #f87171;
+      --grid-line: rgba(148, 163, 184, 0.14);
+      --ray-guide: rgba(56, 189, 248, 0.28);
+      --card-bg: #1e293b;
+      --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.45);
+      --shadow-loupe: 0 14px 36px rgba(0, 0, 0, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background-color: var(--bg-main);
+      overflow: hidden;
+    }
+
+    /* Top Header Section matching Play Store UI */
+    .top-header {
+      padding: 14px 20px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .game-banner-title {
+      text-align: center;
+      font-size: clamp(1.55rem, 5vw, 2.05rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--text-title);
+      margin-bottom: 2px;
+    }
+
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 38px;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.9);
+    }
+
+    .icon-btn svg {
+      width: 26px;
+      height: 26px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .level-title-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .level-title-btn:hover {
+      background: var(--bg-pill);
+    }
+
+    .shape-subtitle {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: -6px;
+      letter-spacing: 0.02em;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      background-color: var(--bg-pill);
+      padding: 7px 15px;
+      border-radius: 16px;
+      min-width: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      transition: transform 0.15s ease;
+    }
+
+    .status-pill.pulse {
+      transform: scale(1.1);
+    }
+
+    .status-pill svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+    }
+
+    .hearts-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .heart-icon {
+      width: 28px;
+      height: 28px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, filter 0.3s ease;
+    }
+
+    .heart-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: #ff2a4b;
+      filter: drop-shadow(0 2px 4px rgba(255, 42, 75, 0.25));
+    }
+
+    .heart-icon.lost {
+      transform: scale(0.75);
+      opacity: 0.22;
+      filter: grayscale(100%);
+    }
+
+    .heart-icon.breaking {
+      animation: heartShake 0.45s ease;
+    }
+
+    @keyframes heartShake {
+      0%, 100% { transform: translateX(0) scale(1); }
+      20% { transform: translateX(-6px) rotate(-12deg) scale(1.2); }
+      40% { transform: translateX(6px) rotate(12deg) scale(1.1); }
+      60% { transform: translateX(-4px) scale(0.9); }
+      80% { transform: translateX(4px) scale(0.8); }
+    }
+
+    /* Main Board Container */
+    .board-wrapper {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    /* Bottom Floating Action Bar */
+    .bottom-bar {
+      padding: 10px 24px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 34px;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .circle-action-btn {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background-color: var(--card-bg);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: var(--shadow-soft);
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+    }
+
+    .circle-action-btn:active {
+      transform: scale(0.92);
+    }
+
+    .circle-action-btn.active-toggle {
+      background-color: var(--accent-blue);
+      color: #ffffff;
+      box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+    }
+
+    .circle-action-btn svg {
+      width: 28px;
+      height: 28px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .badge-count {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 6px;
+      border-radius: 12px;
+      background-color: #0284c7;
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--bg-main);
+    }
+
+    /* Victory Screen matching Screenshot 1 */
+    .victory-screen {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 42px 24px 36px;
+      background: radial-gradient(circle at 50% 48%, #29b6f6 0%, #0288d1 65%, #01579b 100%);
+      color: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      overflow: hidden;
+    }
+
+    .victory-screen.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #victoryBurstCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .victory-header {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .victory-train-title {
+      font-size: clamp(2rem, 6.5vw, 2.55rem);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    }
+
+    .victory-sub-title {
+      font-size: clamp(1.5rem, 5vw, 1.9rem);
+      font-weight: 800;
+      color: #e0f2fe;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .victory-card {
+      position: relative;
+      z-index: 2;
+      width: min(76vw, 300px);
+      height: min(76vw, 300px);
+      background: #ffffff;
+      border-radius: 22px;
+      box-shadow: 0 16px 40px rgba(1, 87, 155, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      transform: scale(0.85);
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .victory-screen.visible .victory-card {
+      transform: scale(1);
+    }
+
+    #snapshotCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .victory-actions {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 6px;
+    }
+
+    .btn-new-game {
+      width: min(84%, 340px);
+      height: 56px;
+      border-radius: 28px;
+      border: none;
+      background: #ffffff;
+      color: #0284c7;
+      font-size: 1.12rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-new-game:active {
+      transform: scale(0.96);
+    }
+
+    .btn-main-menu {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 8px 20px;
+      opacity: 0.95;
+    }
+
+    .btn-main-menu:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+
+    /* Modals (Game Over, Level Select, Settings) */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      background: var(--modal-backdrop);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      width: 100%;
+      max-width: 360px;
+      background: var(--card-bg);
+      color: var(--text-primary);
+      border-radius: 24px;
+      padding: 24px 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: translateY(12px) scale(0.96);
+      transition: transform 0.22s ease;
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text-title);
+    }
+
+    .close-modal-btn {
+      background: var(--bg-pill);
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .modal-body-text {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .primary-modal-btn {
+      width: 100%;
+      height: 50px;
+      border-radius: 25px;
+      border: none;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(2, 132, 199, 0.3);
+    }
+
+    .secondary-modal-btn {
+      width: 100%;
+      height: 46px;
+      border-radius: 23px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: var(--bg-pill);
+      color: var(--text-primary);
+      font-size: 0.96rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 4px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .setting-label {
+      font-size: 0.98rem;
+      font-weight: 600;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      background: #cbd5e1;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .toggle-switch.on {
+      background: #0284c7;
+    }
+
+    .toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+
+    .toggle-switch.on .toggle-knob {
+      transform: translateX(22px);
+    }
+
+    /* Level Selector Grid & Direct Jump */
+    .level-jump-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .level-input {
+      flex: 1;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: var(--bg-pill);
+      color: var(--text-primary);
+      padding: 0 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .level-go-btn {
+      height: 42px;
+      padding: 0 16px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent-blue);
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+
+    .lvl-cell-btn {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: var(--bg-pill);
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.1;
+    }
+
+    .lvl-cell-btn.current {
+      background: var(--accent-blue);
+      color: #ffffff;
+      border-color: var(--accent-blue);
+    }
+
+    .lvl-cell-btn span {
+      font-size: 0.62rem;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Top Header -->
+    <header class="top-header">
+      <h1 class="game-banner-title">Find the<br>Free Path</h1>
+
+      <div class="nav-row">
+        <button class="icon-btn" id="btnOpenLevels" title="Select Level" aria-label="Select Level">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+
+        <button class="level-title-btn" id="btnLevelTitle" title="Jump to Level">
+          <span id="levelTitleText">Level 1</span>
+        </button>
+
+        <button class="icon-btn" id="btnOpenSettings" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="shape-subtitle" id="shapeNameLabel">Classic Heart</div>
+
+      <div class="status-row">
+        <!-- Remaining Arrows Pill -->
+        <div class="status-pill" id="remainingPill" title="Remaining Arrows">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 19L19 5M19 5H8M19 5V16" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+          <span id="remainingCount">0</span>
+        </div>
+
+        <!-- 3 Red Hearts -->
+        <div class="hearts-container" id="heartsContainer">
+          <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+          <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+          <div class="heart-icon"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+        </div>
+
+        <!-- Difficulty Pill -->
+        <div class="status-pill" id="difficultyBadge">Easy</div>
+      </div>
+    </header>
+
+    <!-- Main Puzzle Canvas -->
+    <main class="board-wrapper" id="boardWrapper">
+      <canvas id="gameCanvas"></canvas>
+    </main>
+
+    <!-- Bottom Action Buttons -->
+    <footer class="bottom-bar">
+      <button class="circle-action-btn" id="btnHint" title="Highlight Free Arrow (Hint)">
+        <span class="badge-count" id="hintBadge">3</span>
+        <svg viewBox="0 0 24 24">
+          <path d="M9 18h6"></path>
+          <path d="M10 22h4"></path>
+          <path d="M12 2a7 7 0 0 0-4 12.75c.64.54 1 1.33 1 2.17V17h6v-.08c0-.84.36-1.63 1-2.17A7 7 0 0 0 12 2z"></path>
+        </svg>
+      </button>
+
+      <button class="circle-action-btn" id="btnGridGuide" title="Toggle Grid & Exit Ray Guides">
+        <svg viewBox="0 0 24 24">
+          <line x1="4" y1="9" x2="20" y2="9"></line>
+          <line x1="4" y1="15" x2="20" y2="15"></line>
+          <line x1="10" y1="3" x2="8" y2="21"></line>
+          <line x1="16" y1="3" x2="14" y2="21"></line>
+        </svg>
+      </button>
+    </footer>
+
+    <!-- Victory Overlay Screen ("Level Completed!") -->
+    <section class="victory-screen" id="victoryScreen">
+      <canvas id="victoryBurstCanvas"></canvas>
+
+      <div class="victory-header">
+        <h2 class="victory-train-title">Train<br>Your Brain</h2>
+        <div class="victory-sub-title">Level Completed!</div>
+      </div>
+
+      <div class="victory-card">
+        <canvas id="snapshotCanvas"></canvas>
+      </div>
+
+      <div class="victory-actions">
+        <button class="btn-new-game" id="btnNextLevel">New Game</button>
+        <button class="btn-main-menu" id="btnVictoryLevels">Main</button>
+      </div>
+    </section>
+
+    <!-- Out of Lives Modal -->
+    <div class="modal-overlay" id="gameOverModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span class="modal-title">Out of Lives! ❤️</span>
+        </div>
+        <p class="modal-body-text">
+          Three arrows collided with obstacles along their path. Would you like to refill your hearts and continue from here, or restart the level?
+        </p>
+        <button class="primary-modal-btn" id="btnRefillContinue">Refill Hearts &amp; Continue</button>
+        <button class="secondary-modal-btn" id="btnRestartLevel">Restart Level</button>
+      </div>
+    </div>
+
+    <!-- Level Browser & Any-Level Jump Modal -->
+    <div class="modal-overlay" id="levelModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span class="modal-title">Select Level (1 – ∞)</span>
+          <button class="close-modal-btn" id="btnCloseLevels">✕</button>
+        </div>
+        <div class="level-jump-bar">
+          <input type="number" min="1" max="99999" class="level-input" id="customLevelInput" placeholder="Enter level # (e.g. 42)" />
+          <button class="level-go-btn" id="btnJumpLevel">Play</button>
+        </div>
+        <div class="level-grid" id="levelGrid"></div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span class="modal-title">Settings</span>
+          <button class="close-modal-btn" id="btnCloseSettings">✕</button>
+        </div>
+
+        <div class="setting-row">
+          <span class="setting-label">Sound Effects</span>
+          <button class="toggle-switch on" id="toggleSound"><span class="toggle-knob"></span></button>
+        </div>
+
+        <div class="setting-row">
+          <span class="setting-label">Haptic Vibration</span>
+          <button class="toggle-switch on" id="toggleVibrate"><span class="toggle-knob"></span></button>
+        </div>
+
+        <div class="setting-row">
+          <span class="setting-label">Dark Neon Theme</span>
+          <button class="toggle-switch" id="toggleDark"><span class="toggle-knob"></span></button>
+        </div>
+
+        <div class="setting-row">
+          <span class="setting-label">Magnifier Loupe on Drag</span>
+          <button class="toggle-switch on" id="toggleLoupe"><span class="toggle-knob"></span></button>
+        </div>
+
+        <button class="secondary-modal-btn" id="btnResetCurrentLevel">Restart Current Level</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*************************************************************************
+     * 1. SEEDED DETERMINISTIC RNG (Mulberry32)
+     *************************************************************************/
+    function createRNG(seed) {
+      let a = (seed ^ 0x6D2B79F5) >>> 0;
+      return function () {
+        a |= 0;
+        a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    /*************************************************************************
+     * 2. PROCEDURAL WEB AUDIO SYNTHESIZER (Zero External Assets)
+     *************************************************************************/
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.vibrateEnabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      vibrate(pattern) {
+        if (this.vibrateEnabled && navigator.vibrate) {
+          try { navigator.vibrate(pattern); } catch (e) {}
+        }
+      }
+
+      playSlither() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(780, now + 0.16);
+
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.19);
+      }
+
+      playCollision() {
+        this.vibrate([45, 30, 65]);
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(75, now + 0.22);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+
+      playHint() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [523.25, 659.25, 1046.5];
+        notes.forEach((freq, i) => {
+          const now = this.ctx.currentTime + i * 0.06;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.26);
+        });
+      }
+
+      playVictory() {
+        this.vibrate([30, 40, 80]);
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const chord = [523.25, 659.25, 783.99, 1046.5];
+        chord.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.085;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.46);
+        });
+      }
+    }
+
+    const sfx = new SoundEngine();
+
+    /*************************************************************************
+     * 3. 20 PROCEDURAL SILHOUETTE SHAPE GENERATORS
+     *************************************************************************/
+    const SHAPES = [
+      {
+        name: "Classic Heart",
+        test: (x, y) => {
+          const ny = -y * 1.12 + 0.12;
+          const nx = x * 1.12;
+          const a = nx * nx + ny * ny - 0.82;
+          return (a * a * a - nx * nx * ny * ny * ny) <= 0;
+        }
+      },
+      {
+        name: "Tropical Leaf",
+        test: (x, y) => {
+          // Rotated leaf with stem at bottom-right matching Screenshot 1
+          const u = (x - y) * 0.7071;
+          const v = (x + y) * 0.7071;
+          if (v > 0.55 && v < 0.95 && Math.abs(u) < 0.11) return true;
+          const leafWidth = 0.62 * (1 - v * v) * (1 - 0.22 * v);
+          if (v >= -0.88 && v <= 0.68 && Math.abs(u) <= leafWidth) {
+            // Subtle side serrations
+            const notch = Math.sin(v * 11) * 0.05;
+            return Math.abs(u) <= leafWidth + notch;
+          }
+          return false;
+        }
+      },
+      {
+        name: "Five-Pointed Star",
+        test: (x, y) => {
+          const r = Math.hypot(x, y);
+          const angle = Math.atan2(y, x) + Math.PI / 2;
+          const starR = 0.64 + 0.28 * Math.cos(5 * angle);
+          return r <= starR;
+        }
+      },
+      {
+        name: "Diamond Gem",
+        test: (x, y) => {
+          if (y < -0.35) return y >= -0.82 && Math.abs(x) <= 0.95 - (-0.35 - y) * 0.9;
+          return Math.abs(x) / 0.92 + (y + 0.35) / 1.25 <= 1.0;
+        }
+      },
+      {
+        name: "Monarch Butterfly",
+        test: (x, y) => {
+          const ax = Math.abs(x);
+          if (ax < 0.12 && Math.abs(y) < 0.72) return true;
+          const upper = Math.hypot((ax - 0.48) / 0.48, (y + 0.28) / 0.48) <= 1.0;
+          const lower = Math.hypot((ax - 0.36) / 0.36, (y - 0.36) / 0.42) <= 1.0;
+          return upper || lower;
+        }
+      },
+      {
+        name: "Royal Crown",
+        test: (x, y) => {
+          if (y > 0.58 || y < -0.68 || Math.abs(x) > 0.88) return false;
+          if (y >= 0.22) return true;
+          const peak1 = Math.abs(x) < 0.24 && y >= -0.65 + Math.abs(x) * 2.5;
+          const peak2 = Math.abs(Math.abs(x) - 0.62) < 0.28 && y >= -0.55 + Math.abs(Math.abs(x) - 0.62) * 2.4;
+          return peak1 || peak2 || y >= 0.05;
+        }
+      },
+      {
+        name: "Lightning Bolt",
+        test: (x, y) => {
+          if (Math.abs(y) > 0.92) return false;
+          if (y <= 0.08) {
+            const center = -0.15 - y * 0.38;
+            return Math.abs(x - center) <= 0.38 * (1 + (0.08 - y) * 0.2);
+          } else {
+            const center = 0.18 - y * 0.42;
+            return Math.abs(x - center) <= 0.36 * (1 - (y - 0.08) * 0.55);
+          }
+        }
+      },
+      {
+        name: "Crisp Apple",
+        test: (x, y) => {
+          if (y < -0.55 && y > -0.88 && Math.abs(x - 0.12) < 0.14) return true;
+          const ny = y - 0.08;
+          const dip = 0.18 * Math.exp(-x * x * 12);
+          const topY = ny + (ny < 0 ? dip : -dip * 0.5);
+          return (x * x) / 0.72 + (topY * topY) / 0.62 <= 1.0;
+        }
+      },
+      {
+        name: "Crescent Moon",
+        test: (x, y) => {
+          const outer = (x + 0.08) ** 2 + y ** 2 <= 0.84 ** 2;
+          const inner = (x - 0.34) ** 2 + (y - 0.06) ** 2 <= 0.62 ** 2;
+          return outer && !inner;
+        }
+      },
+      {
+        name: "Cat Silhouette",
+        test: (x, y) => {
+          const head = x * x + (y - 0.14) ** 2 <= 0.72 ** 2;
+          const ax = Math.abs(x);
+          const ear = y < 0.0 && y > -0.85 && ax > 0.18 && ax < 0.72 && (y + 0.85) >= (ax - 0.45) * 2.2 && (y + 0.85) >= (0.45 - ax) * 2.2;
+          return head || ear;
+        }
+      },
+      {
+        name: "Heraldic Shield",
+        test: (x, y) => {
+          if (y < -0.78 || y > 0.88) return false;
+          const maxW = y < 0 ? 0.82 : 0.82 * (1 - (y / 0.92) ** 1.45);
+          return Math.abs(x) <= maxW;
+        }
+      },
+      {
+        name: "Rocket Ship",
+        test: (x, y) => {
+          if (y < -0.88 || y > 0.85) return false;
+          const bodyW = 0.46 * (1 - Math.max(0, (-y - 0.15) / 0.78) ** 1.6);
+          if (Math.abs(x) <= bodyW && y <= 0.65) return true;
+          const fin = y > 0.15 && y < 0.82 && Math.abs(x) <= 0.82 && Math.abs(x) >= 0.25 && (y - 0.15) >= (Math.abs(x) - 0.38) * 1.1;
+          return fin;
+        }
+      },
+      {
+        name: "Ocean Fish",
+        test: (x, y) => {
+          const body = ((x + 0.14) / 0.68) ** 2 + (y / 0.56) ** 2 <= 1.0;
+          const tail = x > 0.32 && x < 0.88 && Math.abs(y) <= (x - 0.22) * 0.95;
+          return body || tail;
+        }
+      },
+      {
+        name: "Evergreen Pine",
+        test: (x, y) => {
+          if (y > 0.58 && y < 0.88 && Math.abs(x) <= 0.22) return true;
+          const t1 = y >= -0.85 && y <= -0.15 && Math.abs(x) <= (y + 0.88) * 0.78;
+          const t2 = y >= -0.35 && y <= 0.25 && Math.abs(x) <= (y + 0.58) * 0.82;
+          const t3 = y >= 0.05 && y <= 0.62 && Math.abs(x) <= (y + 0.32) * 0.88;
+          return t1 || t2 || t3;
+        }
+      },
+      {
+        name: "Hourglass Timer",
+        test: (x, y) => {
+          if (Math.abs(y) > 0.86) return false;
+          const w = 0.22 + 0.64 * Math.abs(y);
+          return Math.abs(x) <= w;
+        }
+      },
+      {
+        name: "Master Key",
+        test: (x, y) => {
+          const ring = x * x + (y + 0.36) ** 2 <= 0.52 ** 2;
+          const shaft = Math.abs(x) <= 0.18 && y >= -0.1 && y <= 0.86;
+          const teeth = x >= 0.0 && x <= 0.52 && ((y >= 0.38 && y <= 0.56) || (y >= 0.68 && y <= 0.86));
+          return ring || shaft || teeth;
+        }
+      },
+      {
+        name: "Sea Anchor",
+        test: (x, y) => {
+          const shaft = Math.abs(x) <= 0.16 && y >= -0.65 && y <= 0.75;
+          const cross = Math.abs(y + 0.25) <= 0.14 && Math.abs(x) <= 0.56;
+          const topRing = x * x + (y + 0.62) ** 2 <= 0.26 ** 2;
+          const r = Math.hypot(x, y - 0.12);
+          const fluke = y > 0.15 && r >= 0.42 && r <= 0.78 && Math.abs(x) <= 0.78;
+          return shaft || cross || topRing || fluke;
+        }
+      },
+      {
+        name: "Four-Leaf Clover",
+        test: (x, y) => {
+          const d = 0.36;
+          const r = 0.44;
+          const l1 = (x - d) ** 2 + (y - d) ** 2 <= r * r;
+          const l2 = (x + d) ** 2 + (y - d) ** 2 <= r * r;
+          const l3 = (x - d) ** 2 + (y + d) ** 2 <= r * r;
+          const l4 = (x + d) ** 2 + (y + d) ** 2 <= r * r;
+          return l1 || l2 || l3 || l4;
+        }
+      },
+      {
+        name: "Hexagon Fortress",
+        test: (x, y) => {
+          const ax = Math.abs(x);
+          const ay = Math.abs(y);
+          return ay <= 0.84 && (ax * 0.866 + ay * 0.5) <= 0.78;
+        }
+      },
+      {
+        name: "Symmetrical Totem",
+        test: (x, y, seed = 1) => {
+          const ax = Math.abs(x);
+          const wave1 = Math.cos(y * 3.8 + seed) * 0.22;
+          const wave2 = Math.sin(y * 6.2 + seed * 1.7) * 0.14;
+          const maxW = 0.58 + wave1 + wave2;
+          return Math.abs(y) <= 0.86 && ax <= Math.max(0.24, maxW);
+        }
+      }
+    ];
+
+    function getShapeIndexForLevel(levelNumber) {
+      // Ensure Level 1 and Level 42 showcase the Classic Heart, Level 2 shows Tropical Leaf
+      if (levelNumber === 1 || levelNumber === 42) return 0;
+      if (levelNumber === 2) return 1;
+      return (levelNumber * 7 + 3) % SHAPES.length;
+    }
+
+    function getLevelConfig(levelNumber) {
+      let gridSize, difficulty, maxWalkLen;
+      if (levelNumber <= 5) {
+        gridSize = 10 + Math.floor((levelNumber - 1) / 2); // 10..12
+        difficulty = "Easy";
+        maxWalkLen = 10;
+      } else if (levelNumber <= 20) {
+        gridSize = 14 + Math.floor((levelNumber - 6) / 4); // 14..17
+        difficulty = "Medium";
+        maxWalkLen = 14;
+      } else if (levelNumber <= 45) {
+        gridSize = 19 + Math.floor((levelNumber - 21) / 6); // 19..23
+        difficulty = "Hard";
+        maxWalkLen = 18;
+      } else {
+        gridSize = Math.min(25, 22 + (levelNumber % 4)); // 22..25
+        difficulty = "Expert";
+        maxWalkLen = 20;
+      }
+      return { gridSize, difficulty, maxWalkLen };
+    }
+
+    /*************************************************************************
+     * 4. 100% SOLVABLE CONSTRUCTIVE REVERSE-PEEL LEVEL GENERATOR
+     *************************************************************************/
+    const DIRS = [
+      { dx: 0, dy: -1, name: 'UP' },
+      { dx: 1, dy: 0, name: 'RIGHT' },
+      { dx: 0, dy: 1, name: 'DOWN' },
+      { dx: -1, dy: 0, name: 'LEFT' }
+    ];
+
+    function generateLevel(levelNumber) {
+      const rng = createRNG(levelNumber * 9176 + 1337);
+      const { gridSize, difficulty, maxWalkLen } = getLevelConfig(levelNumber);
+      const shapeIdx = getShapeIndexForLevel(levelNumber);
+      const shapeDef = SHAPES[shapeIdx];
+
+      // 1. Carve raw boolean silhouette mask
+      const mask = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          const nx = ((c + 0.5) / gridSize) * 2 - 1;
+          const ny = ((r + 0.5) / gridSize) * 2 - 1;
+          if (shapeDef.test(nx, ny, levelNumber)) {
+            mask[r][c] = true;
+          }
+        }
+      }
+
+      // 2. Morphological cleanup: ensure no isolated 1-cell islands exist
+      cleanMask(mask, gridSize);
+
+      // Keep track of remaining unpeeled cells in the mask
+      const rem = Array.from({ length: gridSize }, (_, r) =>
+        Array.from({ length: gridSize }, (_, c) => mask[r][c])
+      );
+
+      const countNeighbors = (r, c) => {
+        let cnt = 0;
+        for (const d of DIRS) {
+          const nr = r + d.dy, nc = c + d.dx;
+          if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize && rem[nr][nc]) cnt++;
+        }
+        return cnt;
+      };
+
+      const isRayClear = (r, c, d) => {
+        let nr = r + d.dy, nc = c + d.dx;
+        while (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize) {
+          if (rem[nr][nc]) return false;
+          nr += d.dy;
+          nc += d.dx;
+        }
+        return true;
+      };
+
+      // Constructive Reverse-Peel loop:
+      // Each arrow peeled at step k has a clear exit ray against all remaining cells (steps >= k).
+      const arrows = [];
+      let arrowIdCounter = 1;
+
+      while (true) {
+        // Collect all valid boundary head candidates (r, c, d)
+        const alignedCandidates = [];
+        const bentCandidates = [];
+
+        for (let r = 0; r < gridSize; r++) {
+          for (let c = 0; c < gridSize; c++) {
+            if (!rem[r][c]) continue;
+            for (const d of DIRS) {
+              if (isRayClear(r, c, d)) {
+                const backR = r - d.dy;
+                const backC = c - d.dx;
+                const hasAlignedBack =
+                  backR >= 0 && backR < gridSize && backC >= 0 && backC < gridSize && rem[backR][backC];
+                if (hasAlignedBack) {
+                  alignedCandidates.push({ r, c, d });
+                } else {
+                  bentCandidates.push({ r, c, d });
+                }
+              }
+            }
+          }
+        }
+
+        if (alignedCandidates.length === 0 && bentCandidates.length === 0) break;
+
+        // Prefer aligned neck candidates so the arrowhead aligns with the final segment
+        const pool = alignedCandidates.length > 0 ? alignedCandidates : bentCandidates;
+        // Prioritize candidates that touch low-degree cells to avoid leaving 1-cell orphans
+        pool.sort((a, b) => {
+          const degA = countNeighbors(a.r, a.c);
+          const degB = countNeighbors(b.r, b.c);
+          return degA - degB;
+        });
+
+        const topSlice = Math.max(1, Math.min(pool.length, Math.ceil(pool.length * 0.35)));
+        const chosen = pool[Math.floor(rng() * topSlice)];
+
+        // Walk backward from head (chosen.r, chosen.c) to build the winding arrow body
+        const headToTail = [{ r: chosen.r, c: chosen.c }];
+        rem[chosen.r][chosen.c] = false;
+
+        const targetLen = 3 + Math.floor(rng() * (maxWalkLen - 2));
+        let prevStepDir = { dx: -chosen.d.dx, dy: -chosen.d.dy };
+
+        for (let step = 1; step < targetLen; step++) {
+          const curr = headToTail[headToTail.length - 1];
+          const validNext = [];
+
+          for (const nd of DIRS) {
+            const nr = curr.r + nd.dy;
+            const nc = curr.c + nd.dx;
+            if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize && rem[nr][nc]) {
+              // For the very first backward step, strongly prefer stepping opposite to arrowhead direction
+              const isAlignedFirstStep =
+                step === 1 && nd.dx === -chosen.d.dx && nd.dy === -chosen.d.dy;
+              const isStraightContinue =
+                nd.dx === prevStepDir.dx && nd.dy === prevStepDir.dy;
+              const deg = countNeighbors(nr, nc);
+
+              let weight = 10;
+              if (isAlignedFirstStep) weight += 120;
+              if (deg === 0) weight += 200; // Immediately absorb degree-0 orphan
+              else if (deg === 1) weight += 45;
+              if (isStraightContinue) weight += 18; // Long straight runs + crisp 90° turns
+
+              validNext.push({ r: nr, c: nc, nd, weight });
+            }
+          }
+
+          if (validNext.length === 0) break;
+
+          // Weighted random selection
+          const totalWeight = validNext.reduce((acc, item) => acc + item.weight, 0);
+          let pick = rng() * totalWeight;
+          let picked = validNext[0];
+          for (const item of validNext) {
+            pick -= item.weight;
+            if (pick <= 0) {
+              picked = item;
+              break;
+            }
+          }
+
+          headToTail.push({ r: picked.r, c: picked.c });
+          rem[picked.r][picked.c] = false;
+          prevStepDir = picked.nd;
+        }
+
+        // Convert headToTail into ordered [tail ... head]
+        const cells = headToTail.slice().reverse();
+        arrows.push({
+          id: arrowIdCounter++,
+          cells,
+          dir: { dx: chosen.d.dx, dy: chosen.d.dy },
+          peelIndex: arrows.length
+        });
+      }
+
+      // 3. Post-process any 1-cell arrows: merge them into the tail of an earlier-peeled arrow if adjacent,
+      // or drop isolated 1-cell dust so every multi-segment arrow looks sleek and authentic.
+      const cellOwner = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+      arrows.forEach((ar) => {
+        ar.cells.forEach((pt) => {
+          cellOwner[pt.r][pt.c] = ar;
+        });
+      });
+
+      const finalArrows = [];
+      for (const ar of arrows) {
+        if (ar.cells.length >= 2) {
+          finalArrows.push(ar);
+        } else {
+          // Single cell at ar.cells[0]: try to attach to the tail of an arrow with a LOWER peelIndex
+          const pt = ar.cells[0];
+          let merged = false;
+          for (const d of DIRS) {
+            const nr = pt.r + d.dy, nc = pt.c + d.dx;
+            if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize) {
+              const neighborArrow = cellOwner[nr][nc];
+              if (
+                neighborArrow &&
+                neighborArrow !== ar &&
+                neighborArrow.cells.length >= 2 &&
+                neighborArrow.peelIndex < ar.peelIndex
+              ) {
+                const tail = neighborArrow.cells[0];
+                if (tail.r === nr && tail.c === nc) {
+                  neighborArrow.cells.unshift({ r: pt.r, c: pt.c });
+                  cellOwner[pt.r][pt.c] = neighborArrow;
+                  merged = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (!merged) {
+            // Remove tiny 1-cell speck from occupancy so every arrow on the board is >= 2 cells
+            cellOwner[pt.r][pt.c] = null;
+          }
+        }
+      }
+
+      // Ensure each arrow's direction matches its final segment [neck -> head] whenever that ray was also clear,
+      // or build the smooth visual polyline with a head turn so the arrowhead unmistakably points in ar.dir.
+      finalArrows.forEach((ar, idx) => {
+        ar.id = idx + 1;
+        ar.escaped = false;
+        ar.slideOffset = 0;
+        ar.state = 'idle'; // 'idle' | 'escaping' | 'colliding' | 'rebounding'
+        ar.errorTimer = 0;
+        ar.hintTimer = 0;
+        ar.maxSlide = gridSize + ar.cells.length + 3;
+        buildArrowPolyline(ar);
+      });
+
+      return {
+        levelNumber,
+        gridSize,
+        difficulty,
+        shapeName: shapeDef.name,
+        arrows: finalArrows,
+        initialArrowSnapshot: finalArrows.map((a) => ({
+          cells: a.cells.map((c) => ({ ...c })),
+          dir: { ...a.dir },
+          trackPoints: a.trackPoints.map((p) => ({ ...p }))
+        }))
+      };
+    }
+
+    function cleanMask(mask, n) {
+      // Remove isolated cells with 0 orthogonal neighbors
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) {
+            if (!mask[r][c]) continue;
+            let deg = 0;
+            for (const d of DIRS) {
+              const nr = r + d.dy, nc = c + d.dx;
+              if (nr >= 0 && nr < n && nc >= 0 && nc < n && mask[nr][nc]) deg++;
+            }
+            if (deg === 0) {
+              mask[r][c] = false;
+              changed = true;
+            }
+          }
+        }
+      }
+    }
+
+    // Builds continuous grid-coordinate track points from tail to arrowhead tip
+    function buildArrowPolyline(arrow) {
+      const pts = arrow.cells.map((cell) => ({
+        x: cell.c + 0.5,
+        y: cell.r + 0.5
+      }));
+
+      // Shorten the tail slightly inside the first cell for clean spacing
+      if (pts.length >= 2) {
+        const dx0 = pts[1].x - pts[0].x;
+        const dy0 = pts[1].y - pts[0].y;
+        pts[0] = {
+          x: pts[0].x + dx0 * 0.22,
+          y: pts[0].y + dy0 * 0.22
+        };
+      }
+
+      // Extend the head slightly in arrow.dir so even if the final bend happens inside the head cell,
+      // the arrowhead has a crisp neck pointing in arrow.dir
+      const last = pts[pts.length - 1];
+      const prev = pts[pts.length - 2];
+      const neckDx = last.x - prev.x;
+      const neckDy = last.y - prev.y;
+
+      if (Math.sign(neckDx) === arrow.dir.dx && Math.sign(neckDy) === arrow.dir.dy) {
+        // Straight neck aligned with exit direction
+        pts[pts.length - 1] = {
+          x: last.x + arrow.dir.dx * 0.16,
+          y: last.y + arrow.dir.dy * 0.16
+        };
+      } else {
+        // 90-degree hook inside the head cell pointing outward in arrow.dir
+        pts.push({
+          x: last.x + arrow.dir.dx * 0.26,
+          y: last.y + arrow.dir.dy * 0.26
+        });
+      }
+
+      // Compute cumulative arc length along trackPoints
+      let totalLen = 0;
+      const cumLen = [0];
+      for (let i = 1; i < pts.length; i++) {
+        const seg = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+        totalLen += seg;
+        cumLen.push(totalLen);
+      }
+
+      arrow.trackPoints = pts;
+      arrow.cumLen = cumLen;
+      arrow.totalArcLen = totalLen;
+    }
+
+    /*************************************************************************
+     * 5. GAME STATE, STORAGE & RAYCAST COLLISION ENGINE
+     *************************************************************************/
+    const STORAGE_KEY = 'arrow_escape_save_v1';
+
+    const state = {
+      levelNumber: 1,
+      maxUnlockedLevel: 1,
+      hints: 3,
+      hearts: 3,
+      showGridGuides: false,
+      darkTheme: false,
+      loupeEnabled: true,
+      levelData: null,
+      particles: [],
+      shockwaves: [],
+      boardShake: 0,
+      pointer: {
+        down: false,
+        x: 0,
+        y: 0,
+        startX: 0,
+        startY: 0,
+        downTime: 0,
+        loupeActive: false,
+        hoveredArrow: null
+      }
+    };
+
+    function loadSaveData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.levelNumber = parsed.levelNumber || 1;
+          state.maxUnlockedLevel = parsed.maxUnlockedLevel || state.levelNumber;
+          state.hints = typeof parsed.hints === 'number' ? parsed.hints : 3;
+          state.darkTheme = !!parsed.darkTheme;
+          state.loupeEnabled = parsed.loupeEnabled !== false;
+          sfx.enabled = parsed.soundEnabled !== false;
+          sfx.vibrateEnabled = parsed.vibrateEnabled !== false;
+        }
+      } catch (e) {}
+      applyThemeAndSettingsUI();
+    }
+
+    function saveProgress() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            levelNumber: state.levelNumber,
+            maxUnlockedLevel: Math.max(state.maxUnlockedLevel, state.levelNumber),
+            hints: state.hints,
+            darkTheme: state.darkTheme,
+            loupeEnabled: state.loupeEnabled,
+            soundEnabled: sfx.enabled,
+            vibrateEnabled: sfx.vibrateEnabled
+          })
+        );
+      } catch (e) {}
+    }
+
+    function applyThemeAndSettingsUI() {
+      document.body.classList.toggle('dark-theme', state.darkTheme);
+      document.getElementById('toggleDark').classList.toggle('on', state.darkTheme);
+      document.getElementById('toggleSound').classList.toggle('on', sfx.enabled);
+      document.getElementById('toggleVibrate').classList.toggle('on', sfx.vibrateEnabled);
+      document.getElementById('toggleLoupe').classList.toggle('on', state.loupeEnabled);
+      document.getElementById('hintBadge').textContent = state.hints;
+    }
+
+    // Build dynamic 2D occupancy map of active (non-escaped) arrows
+    function buildOccupancyGrid() {
+      const n = state.levelData.gridSize;
+      const grid = Array.from({ length: n }, () => Array(n).fill(null));
+      for (const ar of state.levelData.arrows) {
+        if (ar.escaped || ar.state === 'escaping') continue;
+        for (const c of ar.cells) {
+          grid[c.r][c.c] = ar;
+        }
+      }
+      return grid;
+    }
+
+    // Check straight-line exit ray from arrowhead in its pointing direction
+    function checkArrowExitRay(arrow, occGrid) {
+      const n = state.levelData.gridSize;
+      const head = arrow.cells[arrow.cells.length - 1];
+      let r = head.r + arrow.dir.dy;
+      let c = head.c + arrow.dir.dx;
+      let steps = 0;
+
+      while (r >= 0 && r < n && c >= 0 && c < n) {
+        steps++;
+        const blocker = occGrid[r][c];
+        if (blocker && blocker !== arrow) {
+          return {
+            free: false,
+            blocker,
+            hitCell: { r, c },
+            freeSteps: steps - 1
+          };
+        }
+        r += arrow.dir.dy;
+        c += arrow.dir.dx;
+      }
+      return { free: true, freeSteps: steps };
+    }
+
+    function triggerArrow(arrow) {
+      if (!arrow || arrow.escaped || arrow.state === 'escaping') return;
+
+      const occ = buildOccupancyGrid();
+      const rayResult = checkArrowExitRay(arrow, occ);
+
+      if (rayResult.free) {
+        // Free path! Smoothly slither forward along its track and exit screen
+        arrow.state = 'escaping';
+        arrow.hintTimer = 0;
+        sfx.playSlither();
+        sfx.vibrate(12);
+        updateRemainingUI(true);
+      } else {
+        // Blocked! Slide forward into blocker, flash red, shake board, lose 1 heart
+        arrow.state = 'colliding';
+        arrow.targetCollideOffset = Math.min(0.55, rayResult.freeSteps + 0.36);
+        arrow.errorTimer = 1.0;
+        state.boardShake = 8;
+        sfx.playCollision();
+
+        // Spawn shockwave at collision point
+        state.shockwaves.push({
+          gx: rayResult.hitCell.c + 0.5 - arrow.dir.dx * 0.35,
+          gy: rayResult.hitCell.r + 0.5 - arrow.dir.dy * 0.35,
+          radius: 0.1,
+          alpha: 1.0
+        });
+
+        deductHeart();
+      }
+    }
+
+    function deductHeart() {
+      if (state.hearts <= 0) return;
+      state.hearts--;
+      renderHeartsUI(true);
+      if (state.hearts <= 0) {
+        setTimeout(() => {
+          document.getElementById('gameOverModal').classList.add('open');
+        }, 550);
+      }
+    }
+
+    function renderHeartsUI(animateLoss = false) {
+      const heartEls = document.querySelectorAll('#heartsContainer .heart-icon');
+      heartEls.forEach((el, idx) => {
+        const isLost = idx >= state.hearts;
+        if (isLost && !el.classList.contains('lost') && animateLoss) {
+          el.classList.add('breaking');
+          setTimeout(() => el.classList.remove('breaking'), 450);
+        }
+        el.classList.toggle('lost', isLost);
+      });
+    }
+
+    function updateRemainingUI(pulse = false) {
+      if (!state.levelData) return;
+      const rem = state.levelData.arrows.filter((a) => !a.escaped && a.state !== 'escaping').length;
+      document.getElementById('remainingCount').textContent = rem;
+
+      if (pulse) {
+        const pill = document.getElementById('remainingPill');
+        pill.classList.add('pulse');
+        setTimeout(() => pill.classList.remove('pulse'), 160);
+      }
+
+      if (rem === 0) {
+        setTimeout(() => showVictoryScreen(), 380);
+      }
+    }
+
+    function startLevel(lvlNum) {
+      state.levelNumber = Math.max(1, Math.floor(lvlNum));
+      if (state.levelNumber > state.maxUnlockedLevel) {
+        state.maxUnlockedLevel = state.levelNumber;
+      }
+      state.hearts = 3;
+      state.shockwaves = [];
+      state.boardShake = 0;
+      state.levelData = generateLevel(state.levelNumber);
+
+      document.getElementById('levelTitleText').textContent = `Level ${state.levelNumber}`;
+      document.getElementById('shapeNameLabel').textContent = state.levelData.shapeName;
+      document.getElementById('difficultyBadge').textContent = state.levelData.difficulty;
+      document.getElementById('victoryScreen').classList.remove('visible');
+      document.getElementById('gameOverModal').classList.remove('open');
+
+      renderHeartsUI(false);
+      updateRemainingUI(false);
+      saveProgress();
+    }
+
+    /*************************************************************************
+     * 6. HINT SYSTEM (Highlights a Guaranteed Free Arrow + Exit Ray)
+     *************************************************************************/
+    function useHint() {
+      if (!state.levelData) return;
+      if (state.hints <= 0) {
+        // Refill 2 bonus hints so player is never stuck
+        state.hints = 2;
+      }
+
+      const occ = buildOccupancyGrid();
+      const freeArrows = state.levelData.arrows.filter(
+        (a) => !a.escaped && a.state !== 'escaping' && checkArrowExitRay(a, occ).free
+      );
+
+      if (freeArrows.length > 0) {
+        state.hints = Math.max(0, state.hints - 1);
+        document.getElementById('hintBadge').textContent = state.hints;
+        const target = freeArrows[0];
+        target.hintTimer = 3.5; // Pulse emerald green for 3.5 seconds
+        sfx.playHint();
+        saveProgress();
+      }
+    }
+
+    /*************************************************************************
+     * 7. HTML5 CANVAS RENDERER, TRACK SLITHERING & 2.2x MAGNIFIER LOUPE
+     *************************************************************************/
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let boardMetrics = { x: 0, y: 0, size: 300, cellSize: 20 };
+
+    function resizeCanvas() {
+      const wrapper = document.getElementById('boardWrapper');
+      const rect = wrapper.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const pad = 26;
+      const minDim = Math.max(120, Math.min(rect.width - pad * 2, rect.height - pad * 2));
+      const n = state.levelData ? state.levelData.gridSize : 14;
+      const cellSize = minDim / n;
+      const boardSize = cellSize * n;
+
+      boardMetrics = {
+        width: rect.width,
+        height: rect.height,
+        x: (rect.width - boardSize) / 2,
+        y: (rect.height - boardSize) / 2,
+        size: boardSize,
+        cellSize
+      };
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // Sample point along an arrow's extended track (original polyline + straight exit ray) at arc distance `d`
+    function sampleArrowTrack(arrow, d) {
+      const pts = arrow.trackPoints;
+      const cum = arrow.cumLen;
+      const total = arrow.totalArcLen;
+
+      if (d <= 0) return { x: pts[0].x, y: pts[0].y };
+      if (d >= total) {
+        const extra = d - total;
+        const last = pts[pts.length - 1];
+        return {
+          x: last.x + arrow.dir.dx * extra,
+          y: last.y + arrow.dir.dy * extra
+        };
+      }
+
+      for (let i = 1; i < cum.length; i++) {
+        if (d <= cum[i]) {
+          const segLen = cum[i] - cum[i - 1] || 1e-6;
+          const t = (d - cum[i - 1]) / segLen;
+          return {
+            x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * t,
+            y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * t
+          };
+        }
+      }
+      return pts[pts.length - 1];
+    }
+
+    // Extract the sub-polyline of an arrow for arc interval [s, s + totalArcLen]
+    function getSlitheredPolyline(arrow) {
+      const s = arrow.slideOffset;
+      if (s === 0) return arrow.trackPoints;
+
+      const startArc = s;
+      const endArc = s + arrow.totalArcLen;
+      const result = [sampleArrowTrack(arrow, startArc)];
+
+      for (let i = 1; i < arrow.cumLen.length - 1; i++) {
+        const vertexArc = arrow.cumLen[i];
+        if (vertexArc > startArc && vertexArc < endArc) {
+          result.push(arrow.trackPoints[i]);
+        }
+      }
+
+      if (arrow.totalArcLen > startArc && arrow.totalArcLen < endArc) {
+        result.push(arrow.trackPoints[arrow.trackPoints.length - 1]);
+      }
+
+      result.push(sampleArrowTrack(arrow, endArc));
+      return result;
+    }
+
+    // Render the board inside any given 2D context (used for main board AND inside the 2.2x Loupe)
+    function renderBoardScene(targetCtx, metrics, isLoupe = false) {
+      if (!state.levelData) return;
+      const styles = getComputedStyle(document.body);
+      const arrowBaseColor = styles.getPropertyValue('--arrow-color').trim() || '#0f1b33';
+      const arrowHoverColor = styles.getPropertyValue('--arrow-hover').trim() || '#1e3a8a';
+      const arrowHintColor = styles.getPropertyValue('--arrow-hint').trim() || '#10b981';
+      const arrowErrorColor = styles.getPropertyValue('--arrow-error').trim() || '#ef4444';
+      const gridColor = styles.getPropertyValue('--grid-line').trim();
+      const rayGuideColor = styles.getPropertyValue('--ray-guide').trim();
+
+      const { x: bx, y: by, size: bSize, cellSize: cs } = metrics;
+      const n = state.levelData.gridSize;
+
+      targetCtx.save();
+
+      // Apply screen shake when a collision occurs
+      if (!isLoupe && state.boardShake > 0.2) {
+        const sx = (Math.random() - 0.5) * state.boardShake;
+        const sy = (Math.random() - 0.5) * state.boardShake;
+        targetCtx.translate(sx, sy);
+      }
+
+      // 1. Optional Alignment Grid & Ray Guides (# toggle button)
+      if (state.showGridGuides || isLoupe) {
+        targetCtx.strokeStyle = gridColor;
+        targetCtx.lineWidth = 1;
+        targetCtx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const px = bx + i * cs;
+          const py = by + i * cs;
+          targetCtx.moveTo(px, by);
+          targetCtx.lineTo(px, by + bSize);
+          targetCtx.moveTo(bx, py);
+          targetCtx.lineTo(bx + bSize, py);
+        }
+        targetCtx.stroke();
+      }
+
+      if (state.showGridGuides) {
+        targetCtx.strokeStyle = rayGuideColor;
+        targetCtx.lineWidth = 1.4;
+        targetCtx.setLineDash([4, 4]);
+        for (const ar of state.levelData.arrows) {
+          if (ar.escaped) continue;
+          const head = ar.cells[ar.cells.length - 1];
+          const hx = bx + (head.c + 0.5) * cs;
+          const hy = by + (head.r + 0.5) * cs;
+          targetCtx.beginPath();
+          targetCtx.moveTo(hx, hy);
+          targetCtx.lineTo(hx + ar.dir.dx * bSize, hy + ar.dir.dy * bSize);
+          targetCtx.stroke();
+        }
+        targetCtx.setLineDash([]);
+      }
+
+      // 2. Draw all active Bent Arrows
+      const strokeW = Math.max(2.2, cs * 0.21);
+      const headSize = Math.max(5.5, cs * 0.42);
+
+      for (const ar of state.levelData.arrows) {
+        if (ar.escaped) continue;
+
+        let color = arrowBaseColor;
+        let extraWidth = 0;
+
+        if (ar.errorTimer > 0) {
+          color = arrowErrorColor;
+          extraWidth = 1.2;
+        } else if (ar.hintTimer > 0) {
+          color = arrowHintColor;
+          extraWidth = 1.2 + Math.sin(performance.now() * 0.012) * 0.8;
+        } else if (state.pointer.hoveredArrow === ar) {
+          color = arrowHoverColor;
+          extraWidth = 1.0;
+        }
+
+        // Draw animated hint exit ray if hinted
+        if (ar.hintTimer > 0) {
+          const headPt = ar.trackPoints[ar.trackPoints.length - 1];
+          const hx = bx + headPt.x * cs;
+          const hy = by + headPt.y * cs;
+          targetCtx.save();
+          targetCtx.strokeStyle = arrowHintColor;
+          targetCtx.globalAlpha = 0.35 + 0.2 * Math.sin(performance.now() * 0.01);
+          targetCtx.lineWidth = strokeW * 1.4;
+          targetCtx.setLineDash([6, 6]);
+          targetCtx.beginPath();
+          targetCtx.moveTo(hx, hy);
+          targetCtx.lineTo(hx + ar.dir.dx * bSize, hy + ar.dir.dy * bSize);
+          targetCtx.stroke();
+          targetCtx.restore();
+        }
+
+        const poly = getSlitheredPolyline(ar);
+        if (poly.length < 2) continue;
+
+        const tip = poly[poly.length - 1];
+        const tipX = bx + tip.x * cs;
+        const tipY = by + tip.y * cs;
+
+        // Shorten visual shaft slightly before tip so arrowhead triangle is crisp
+        const shaftEndOffset = headSize * 0.55;
+
+        targetCtx.strokeStyle = color;
+        targetCtx.fillStyle = color;
+        targetCtx.lineWidth = strokeW + extraWidth;
+        targetCtx.lineCap = 'round';
+        targetCtx.lineJoin = 'round';
+
+        targetCtx.beginPath();
+        targetCtx.moveTo(bx + poly[0].x * cs, by + poly[0].y * cs);
+        for (let i = 1; i < poly.length - 1; i++) {
+          targetCtx.lineTo(bx + poly[i].x * cs, by + poly[i].y * cs);
+        }
+        targetCtx.lineTo(
+          tipX - ar.dir.dx * shaftEndOffset,
+          tipY - ar.dir.dy * shaftEndOffset
+        );
+        targetCtx.stroke();
+
+        // Draw sharp directional arrowhead at leading end
+        const angle = Math.atan2(ar.dir.dy, ar.dir.dx);
+        targetCtx.save();
+        targetCtx.translate(tipX, tipY);
+        targetCtx.rotate(angle);
+        targetCtx.beginPath();
+        targetCtx.moveTo(headSize * 0.32, 0);
+        targetCtx.lineTo(-headSize * 0.78, -headSize * 0.62);
+        targetCtx.lineTo(-headSize * 0.58, 0);
+        targetCtx.lineTo(-headSize * 0.78, headSize * 0.62);
+        targetCtx.closePath();
+        targetCtx.fill();
+        targetCtx.restore();
+      }
+
+      // 3. Draw Collision Shockwaves
+      for (const sw of state.shockwaves) {
+        targetCtx.save();
+        targetCtx.strokeStyle = arrowErrorColor;
+        targetCtx.globalAlpha = sw.alpha;
+        targetCtx.lineWidth = 2.5;
+        targetCtx.beginPath();
+        targetCtx.arc(bx + sw.gx * cs, by + sw.gy * cs, sw.radius * cs, 0, Math.PI * 2);
+        targetCtx.stroke();
+        targetCtx.restore();
+      }
+
+      targetCtx.restore();
+    }
+
+    // Render floating 2.2x Magnifier Loupe matching Screenshot 2
+    function renderMagnifierLoupe() {
+      if (!state.pointer.down || !state.pointer.loupeActive || !state.loupeEnabled) return;
+
+      const px = state.pointer.x;
+      const py = state.pointer.y;
+      const loupeRadius = 76;
+      const zoom = 2.2;
+
+      // Position loupe offset above finger/cursor, flipping downward if near top edge
+      let lx = px;
+      let ly = py - 102;
+      if (ly - loupeRadius < 10) {
+        ly = py + 102;
+      }
+      lx = Math.max(loupeRadius + 10, Math.min(boardMetrics.width - loupeRadius - 10, lx));
+
+      ctx.save();
+
+      // Outer drop shadow + white ring frame
+      ctx.shadowColor = 'rgba(15, 23, 42, 0.28)';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 8;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(lx, ly, loupeRadius + 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Clip inside circular lens
+      ctx.shadowColor = 'transparent';
+      ctx.beginPath();
+      ctx.arc(lx, ly, loupeRadius, 0, Math.PI * 2);
+      ctx.clip();
+
+      const bgMain = getComputedStyle(document.body).getPropertyValue('--bg-main').trim() || '#ffffff';
+      ctx.fillStyle = bgMain;
+      ctx.fillRect(lx - loupeRadius, ly - loupeRadius, loupeRadius * 2, loupeRadius * 2);
+
+      // Transform around pointer coordinate (px, py) by 2.2x zoom
+      ctx.translate(lx, ly);
+      ctx.scale(zoom, zoom);
+      ctx.translate(-px, -py);
+
+      renderBoardScene(ctx, boardMetrics, true);
+
+      ctx.restore();
+
+      // Subtle inner lens border and center target crosshair
+      ctx.save();
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(lx, ly, loupeRadius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(2, 132, 199, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /*************************************************************************
+     * 8. MAIN ANIMATION LOOP
+     *************************************************************************/
+    let lastTime = performance.now();
+
+    function gameLoop(now) {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+
+      if (state.levelData) {
+        if (state.boardShake > 0) {
+          state.boardShake = Math.max(0, state.boardShake - dt * 28);
+        }
+
+        for (const ar of state.levelData.arrows) {
+          if (ar.escaped) continue;
+
+          if (ar.hintTimer > 0) {
+            ar.hintTimer = Math.max(0, ar.hintTimer - dt);
+          }
+          if (ar.errorTimer > 0) {
+            ar.errorTimer = Math.max(0, ar.errorTimer - dt * 1.6);
+          }
+
+          if (ar.state === 'escaping') {
+            ar.slideOffset += dt * 28; // Fast smooth slither along track
+            if (ar.slideOffset >= ar.maxSlide) {
+              ar.escaped = true;
+              ar.state = 'idle';
+            }
+          } else if (ar.state === 'colliding') {
+            ar.slideOffset += dt * 10;
+            if (ar.slideOffset >= ar.targetCollideOffset) {
+              ar.slideOffset = ar.targetCollideOffset;
+              ar.state = 'rebounding';
+            }
+          } else if (ar.state === 'rebounding') {
+            ar.slideOffset -= dt * 8;
+            if (ar.slideOffset <= 0) {
+              ar.slideOffset = 0;
+              ar.state = 'idle';
+            }
+          }
+        }
+
+        for (let i = state.shockwaves.length - 1; i >= 0; i--) {
+          const sw = state.shockwaves[i];
+          sw.radius += dt * 3.2;
+          sw.alpha -= dt * 2.4;
+          if (sw.alpha <= 0) state.shockwaves.splice(i, 1);
+        }
+      }
+
+      ctx.clearRect(0, 0, boardMetrics.width, boardMetrics.height);
+      renderBoardScene(ctx, boardMetrics, false);
+      renderMagnifierLoupe();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    /*************************************************************************
+     * 9. POINTER / TOUCH INTERACTION & HIT-TESTING
+     *************************************************************************/
+    function findArrowAtCanvasPos(cx, cy) {
+      if (!state.levelData) return null;
+      const { x: bx, y: by, cellSize: cs } = boardMetrics;
+      const gx = (cx - bx) / cs;
+      const gy = (cy - by) / cs;
+      const col = Math.floor(gx);
+      const row = Math.floor(gy);
+      const n = state.levelData.gridSize;
+
+      // Exact grid cell check first
+      if (row >= 0 && row < n && col >= 0 && col < n) {
+        for (const ar of state.levelData.arrows) {
+          if (ar.escaped || ar.state === 'escaping') continue;
+          for (const cell of ar.cells) {
+            if (cell.r === row && cell.c === col) return ar;
+          }
+        }
+      }
+
+      // Nearest segment tolerance (within 0.65 cell radius) for smooth mobile tapping
+      let bestArrow = null;
+      let bestDist = 0.65;
+      for (const ar of state.levelData.arrows) {
+        if (ar.escaped || ar.state === 'escaping') continue;
+        for (const cell of ar.cells) {
+          const d = Math.hypot(gx - (cell.c + 0.5), gy - (cell.r + 0.5));
+          if (d < bestDist) {
+            bestDist = d;
+            bestArrow = ar;
+          }
+        }
+      }
+      return bestArrow;
+    }
+
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    let loupeHoldTimeout = null;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const pt = getCanvasCoords(e);
+      state.pointer.down = true;
+      state.pointer.x = pt.x;
+      state.pointer.y = pt.y;
+      state.pointer.startX = pt.x;
+      state.pointer.startY = pt.y;
+      state.pointer.downTime = performance.now();
+      state.pointer.loupeActive = false;
+      state.pointer.hoveredArrow = findArrowAtCanvasPos(pt.x, pt.y);
+
+      clearTimeout(loupeHoldTimeout);
+      if (state.loupeEnabled) {
+        loupeHoldTimeout = setTimeout(() => {
+          if (state.pointer.down) {
+            state.pointer.loupeActive = true;
+          }
+        }, 160);
+      }
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      const pt = getCanvasCoords(e);
+      state.pointer.x = pt.x;
+      state.pointer.y = pt.y;
+      state.pointer.hoveredArrow = findArrowAtCanvasPos(pt.x, pt.y);
+
+      if (state.pointer.down && state.loupeEnabled) {
+        const dist = Math.hypot(pt.x - state.pointer.startX, pt.y - state.pointer.startY);
+        if (dist > 9) {
+          state.pointer.loupeActive = true;
+        }
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      clearTimeout(loupeHoldTimeout);
+      if (!state.pointer.down) return;
+      const target = state.pointer.hoveredArrow;
+      state.pointer.down = false;
+      state.pointer.loupeActive = false;
+      state.pointer.hoveredArrow = null;
+
+      if (target) {
+        triggerArrow(target);
+      }
+    });
+
+    /*************************************************************************
+     * 10. VICTORY SCREEN ("Level Completed!") & SNAPSHOT RENDERER
+     *************************************************************************/
+    const burstCanvas = document.getElementById('victoryBurstCanvas');
+    const burstCtx = burstCanvas.getContext('2d');
+    let victoryAnimId = null;
+    let confettiPieces = [];
+    let burstAngle = 0;
+
+    function showVictoryScreen() {
+      sfx.playVictory();
+      const screen = document.getElementById('victoryScreen');
+      screen.classList.add('visible');
+
+      renderCompletedSnapshot();
+      initConfetti();
+      if (!victoryAnimId) {
+        animateVictoryBackground();
+      }
+    }
+
+    function renderCompletedSnapshot() {
+      const snapCanvas = document.getElementById('snapshotCanvas');
+      const sCtx = snapCanvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const size = 260;
+      snapCanvas.width = size * dpr;
+      snapCanvas.height = size * dpr;
+      sCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sCtx.clearRect(0, 0, size, size);
+
+      if (!state.levelData) return;
+      const n = state.levelData.gridSize;
+      const pad = 14;
+      const cs = (size - pad * 2) / n;
+      const strokeW = Math.max(1.8, cs * 0.2);
+      const headSize = Math.max(4.5, cs * 0.42);
+
+      sCtx.strokeStyle = '#0f1b33';
+      sCtx.fillStyle = '#0f1b33';
+      sCtx.lineWidth = strokeW;
+      sCtx.lineCap = 'round';
+      sCtx.lineJoin = 'round';
+
+      for (const ar of state.levelData.initialArrowSnapshot) {
+        const poly = ar.trackPoints;
+        if (poly.length < 2) continue;
+        const tip = poly[poly.length - 1];
+        const tipX = pad + tip.x * cs;
+        const tipY = pad + tip.y * cs;
+        const shaftEndOffset = headSize * 0.55;
+
+        sCtx.beginPath();
+        sCtx.moveTo(pad + poly[0].x * cs, pad + poly[0].y * cs);
+        for (let i = 1; i < poly.length - 1; i++) {
+          sCtx.lineTo(pad + poly[i].x * cs, pad + poly[i].y * cs);
+        }
+        sCtx.lineTo(tipX - ar.dir.dx * shaftEndOffset, tipY - ar.dir.dy * shaftEndOffset);
+        sCtx.stroke();
+
+        const angle = Math.atan2(ar.dir.dy, ar.dir.dx);
+        sCtx.save();
+        sCtx.translate(tipX, tipY);
+        sCtx.rotate(angle);
+        sCtx.beginPath();
+        sCtx.moveTo(headSize * 0.3, 0);
+        sCtx.lineTo(-headSize * 0.75, -headSize * 0.6);
+        sCtx.lineTo(-headSize * 0.75, headSize * 0.6);
+        sCtx.closePath();
+        sCtx.fill();
+        sCtx.restore();
+      }
+    }
+
+    function initConfetti() {
+      const colors = ['#f472b6', '#facc15', '#4ade80', '#60a5fa', '#c084fc', '#fb923c'];
+      confettiPieces = Array.from({ length: 42 }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight * 0.55 - 60,
+        vx: (Math.random() - 0.5) * 1.4,
+        vy: 1.2 + Math.random() * 2.2,
+        w: 7 + Math.random() * 6,
+        h: 4 + Math.random() * 4,
+        rot: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 0.08,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      }));
+    }
+
+    function animateVictoryBackground() {
+      const screen = document.getElementById('victoryScreen');
+      if (!screen.classList.contains('visible')) {
+        victoryAnimId = null;
+        return;
+      }
+
+      const rect = screen.getBoundingClientRect();
+      if (burstCanvas.width !== rect.width || burstCanvas.height !== rect.height) {
+        burstCanvas.width = rect.width;
+        burstCanvas.height = rect.height;
+      }
+
+      const w = burstCanvas.width;
+      const h = burstCanvas.height;
+      burstCtx.clearRect(0, 0, w, h);
+
+      // Rotating light-blue radial burst rays behind the snapshot card
+      const cx = w / 2;
+      const cy = h * 0.48;
+      const maxR = Math.hypot(w, h);
+      const rayCount = 18;
+      burstAngle += 0.0035;
+
+      burstCtx.save();
+      burstCtx.translate(cx, cy);
+      burstCtx.rotate(burstAngle);
+      burstCtx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      for (let i = 0; i < rayCount; i++) {
+        const a0 = (i * 2 * Math.PI) / rayCount;
+        const a1 = a0 + Math.PI / rayCount;
+        burstCtx.beginPath();
+        burstCtx.moveTo(0, 0);
+        burstCtx.arc(0, 0, maxR, a0, a1);
+        burstCtx.closePath();
+        burstCtx.fill();
+      }
+      burstCtx.restore();
+
+      // Falling colorful confetti rectangles
+      for (const p of confettiPieces) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vRot;
+        if (p.y > h + 20) {
+          p.y = -15;
+          p.x = Math.random() * w;
+        }
+        burstCtx.save();
+        burstCtx.translate(p.x, p.y);
+        burstCtx.rotate(p.rot);
+        burstCtx.fillStyle = p.color;
+        burstCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        burstCtx.restore();
+      }
+
+      victoryAnimId = requestAnimationFrame(animateVictoryBackground);
+    }
+
+    /*************************************************************************
+     * 11. UI CONTROLS & MODALS
+     *************************************************************************/
+    document.getElementById('btnHint').addEventListener('click', useHint);
+
+    document.getElementById('btnGridGuide').addEventListener('click', (e) => {
+      state.showGridGuides = !state.showGridGuides;
+      e.currentTarget.classList.toggle('active-toggle', state.showGridGuides);
+    });
+
+    document.getElementById('btnNextLevel').addEventListener('click', () => {
+      startLevel(state.levelNumber + 1);
+    });
+
+    document.getElementById('btnVictoryLevels').addEventListener('click', () => {
+      document.getElementById('victoryScreen').classList.remove('visible');
+      openLevelModal();
+    });
+
+    document.getElementById('btnRefillContinue').addEventListener('click', () => {
+      state.hearts = 3;
+      renderHeartsUI(false);
+      document.getElementById('gameOverModal').classList.remove('open');
+    });
+
+    document.getElementById('btnRestartLevel').addEventListener('click', () => {
+      startLevel(state.levelNumber);
+    });
+
+    // Level Selector Modal
+    function openLevelModal() {
+      const grid = document.getElementById('levelGrid');
+      grid.innerHTML = '';
+      const maxDisplay = Math.max(45, state.maxUnlockedLevel + 12);
+      for (let lvl = 1; lvl <= maxDisplay; lvl++) {
+        const btn = document.createElement('button');
+        btn.className = 'lvl-cell-btn' + (lvl === state.levelNumber ? ' current' : '');
+        const sIdx = getShapeIndexForLevel(lvl);
+        const shortName = SHAPES[sIdx].name.split(' ').pop();
+        btn.innerHTML = `${lvl}<span>${shortName}</span>`;
+        btn.addEventListener('click', () => {
+          document.getElementById('levelModal').classList.remove('open');
+          startLevel(lvl);
+        });
+        grid.appendChild(btn);
+      }
+      document.getElementById('customLevelInput').value = state.levelNumber;
+      document.getElementById('levelModal').classList.add('open');
+    }
+
+    document.getElementById('btnOpenLevels').addEventListener('click', openLevelModal);
+    document.getElementById('btnLevelTitle').addEventListener('click', openLevelModal);
+    document.getElementById('btnCloseLevels').addEventListener('click', () => {
+      document.getElementById('levelModal').classList.remove('open');
+    });
+
+    document.getElementById('btnJumpLevel').addEventListener('click', () => {
+      const val = parseInt(document.getElementById('customLevelInput').value, 10);
+      if (!isNaN(val) && val >= 1) {
+        document.getElementById('levelModal').classList.remove('open');
+        startLevel(val);
+      }
+    });
+
+    // Settings Modal
+    document.getElementById('btnOpenSettings').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.add('open');
+    });
+    document.getElementById('btnCloseSettings').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('open');
+    });
+
+    document.getElementById('toggleSound').addEventListener('click', () => {
+      sfx.enabled = !sfx.enabled;
+      applyThemeAndSettingsUI();
+      saveProgress();
+    });
+
+    document.getElementById('toggleVibrate').addEventListener('click', () => {
+      sfx.vibrateEnabled = !sfx.vibrateEnabled;
+      applyThemeAndSettingsUI();
+      saveProgress();
+    });
+
+    document.getElementById('toggleDark').addEventListener('click', () => {
+      state.darkTheme = !state.darkTheme;
+      applyThemeAndSettingsUI();
+      saveProgress();
+    });
+
+    document.getElementById('toggleLoupe').addEventListener('click', () => {
+      state.loupeEnabled = !state.loupeEnabled;
+      applyThemeAndSettingsUI();
+      saveProgress();
+    });
+
+    document.getElementById('btnResetCurrentLevel').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('open');
+      startLevel(state.levelNumber);
+    });
+
+    /*************************************************************************
+     * 12. BOOTSTRAP GAME
+     *************************************************************************/
+    loadSaveData();
+    startLevel(state.levelNumber);
+    resizeCanvas();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
