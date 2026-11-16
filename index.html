@@ -55,6 +55,8 @@
     }
 
     html, body {
+      position: fixed;
+      inset: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
@@ -67,46 +69,48 @@
     #app {
       position: relative;
       width: 100%;
-      height: 100dvh;
-      max-width: 540px;
+      height: 100%;
+      max-width: 100%;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      align-items: center;
       background-color: var(--bg-main);
       overflow: hidden;
     }
 
-    /* Top Header Section matching Play Store UI */
+    /* Top Header Section - Extra top padding so iframe's floating EXIT/FULLSCREEN button never overlaps */
     .top-header {
-      padding: 14px 20px 6px;
+      width: 100%;
+      max-width: 520px;
+      padding: 42px 18px 4px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 6px;
       z-index: 10;
       flex-shrink: 0;
     }
 
     .game-banner-title {
       text-align: center;
-      font-size: clamp(1.55rem, 5vw, 2.05rem);
+      font-size: clamp(1.25rem, 4vw, 1.75rem);
       font-weight: 800;
-      line-height: 1.15;
+      line-height: 1.12;
       letter-spacing: -0.02em;
       color: var(--text-title);
-      margin-bottom: 2px;
     }
 
     .nav-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 38px;
+      height: 34px;
     }
 
     .icon-btn {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: none;
       background: transparent;
@@ -123,8 +127,8 @@
     }
 
     .icon-btn svg {
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       stroke: currentColor;
       stroke-width: 2.2;
       fill: none;
@@ -135,11 +139,11 @@
     .level-title-btn {
       background: transparent;
       border: none;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: var(--text-primary);
       cursor: pointer;
-      padding: 4px 12px;
+      padding: 4px 10px;
       border-radius: 10px;
       display: flex;
       align-items: center;
@@ -151,11 +155,11 @@
     }
 
     .shape-subtitle {
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 600;
       color: var(--text-muted);
       text-align: center;
-      margin-top: -6px;
+      margin-top: -4px;
       letter-spacing: 0.02em;
     }
 
@@ -168,14 +172,14 @@
 
     .status-pill {
       background-color: var(--bg-pill);
-      padding: 7px 15px;
-      border-radius: 16px;
-      min-width: 82px;
+      padding: 6px 13px;
+      border-radius: 14px;
+      min-width: 74px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      font-size: 0.98rem;
+      gap: 6px;
+      font-size: 0.92rem;
       font-weight: 700;
       color: var(--text-primary);
       transition: transform 0.15s ease;
@@ -186,20 +190,20 @@
     }
 
     .status-pill svg {
-      width: 15px;
-      height: 15px;
+      width: 14px;
+      height: 14px;
       fill: currentColor;
     }
 
     .hearts-container {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .heart-icon {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, filter 0.3s ease;
     }
 
@@ -228,11 +232,12 @@
       80% { transform: translateX(4px) scale(0.8); }
     }
 
-    /* Main Board Container */
+    /* Main Board Container - Takes remaining middle space safely */
     .board-wrapper {
       position: relative;
-      flex: 1;
+      flex: 1 1 auto;
       width: 100%;
+      min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -249,19 +254,21 @@
 
     /* Bottom Floating Action Bar */
     .bottom-bar {
-      padding: 10px 24px 24px;
+      width: 100%;
+      max-width: 520px;
+      padding: 6px 24px 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 34px;
+      gap: 32px;
       z-index: 10;
       flex-shrink: 0;
     }
 
     .circle-action-btn {
       position: relative;
-      width: 64px;
-      height: 64px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       background-color: var(--card-bg);
       border: 1px solid rgba(148, 163, 184, 0.18);
@@ -285,8 +292,8 @@
     }
 
     .circle-action-btn svg {
-      width: 28px;
-      height: 28px;
+      width: 25px;
+      height: 25px;
       stroke: currentColor;
       stroke-width: 2;
       fill: none;
@@ -298,18 +305,36 @@
       position: absolute;
       top: -2px;
       right: -2px;
-      min-width: 24px;
-      height: 24px;
-      padding: 0 6px;
-      border-radius: 12px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 5px;
+      border-radius: 11px;
       background-color: #0284c7;
       color: #ffffff;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
       border: 2px solid var(--bg-main);
+    }
+
+    /* Compact Landscape / Short Height Adjustments */
+    @media (max-height: 620px) {
+      .top-header {
+        padding: 36px 16px 2px;
+        gap: 3px;
+      }
+      .game-banner-title {
+        display: none;
+      }
+      .bottom-bar {
+        padding: 4px 20px 10px;
+      }
+      .circle-action-btn {
+        width: 48px;
+        height: 48px;
+      }
     }
 
     /* Victory Screen matching Screenshot 1 */
@@ -321,7 +346,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 42px 24px 36px;
+      padding: 42px 20px 28px;
       background: radial-gradient(circle at 50% 48%, #29b6f6 0%, #0288d1 65%, #01579b 100%);
       color: #ffffff;
       opacity: 0;
@@ -351,12 +376,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      margin-top: 6px;
+      gap: 10px;
+      margin-top: 4px;
     }
 
     .victory-train-title {
-      font-size: clamp(2rem, 6.5vw, 2.55rem);
+      font-size: clamp(1.7rem, 5.5vw, 2.35rem);
       font-weight: 800;
       line-height: 1.12;
       letter-spacing: -0.01em;
@@ -364,7 +389,7 @@
     }
 
     .victory-sub-title {
-      font-size: clamp(1.5rem, 5vw, 1.9rem);
+      font-size: clamp(1.3rem, 4.5vw, 1.75rem);
       font-weight: 800;
       color: #e0f2fe;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -373,15 +398,15 @@
     .victory-card {
       position: relative;
       z-index: 2;
-      width: min(76vw, 300px);
-      height: min(76vw, 300px);
+      width: min(68vw, 42vh, 280px);
+      height: min(68vw, 42vh, 280px);
       background: #ffffff;
       border-radius: 22px;
       box-shadow: 0 16px 40px rgba(1, 87, 155, 0.45);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 18px;
+      padding: 16px;
       transform: scale(0.85);
       transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -403,18 +428,18 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 6px;
+      gap: 12px;
+      margin-bottom: 4px;
     }
 
     .btn-new-game {
-      width: min(84%, 340px);
-      height: 56px;
-      border-radius: 28px;
+      width: min(84%, 320px);
+      height: 52px;
+      border-radius: 26px;
       border: none;
       background: #ffffff;
       color: #0284c7;
-      font-size: 1.12rem;
+      font-size: 1.08rem;
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
@@ -429,16 +454,11 @@
       background: transparent;
       border: none;
       color: #ffffff;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
-      padding: 8px 20px;
+      padding: 6px 20px;
       opacity: 0.95;
-    }
-
-    .btn-main-menu:hover {
-      opacity: 1;
-      text-decoration: underline;
     }
 
     /* Modals (Game Over, Level Select, Settings) */
@@ -464,15 +484,15 @@
 
     .modal-box {
       width: 100%;
-      max-width: 360px;
+      max-width: 350px;
       background: var(--card-bg);
       color: var(--text-primary);
       border-radius: 24px;
-      padding: 24px 22px;
+      padding: 22px 20px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       transform: translateY(12px) scale(0.96);
       transition: transform 0.22s ease;
     }
@@ -488,7 +508,7 @@
     }
 
     .modal-title {
-      font-size: 1.3rem;
+      font-size: 1.22rem;
       font-weight: 800;
       color: var(--text-title);
     }
@@ -496,17 +516,17 @@
     .close-modal-btn {
       background: var(--bg-pill);
       border: none;
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--text-muted);
       cursor: pointer;
     }
 
     .modal-body-text {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--text-muted);
       line-height: 1.45;
       text-align: center;
@@ -514,12 +534,12 @@
 
     .primary-modal-btn {
       width: 100%;
-      height: 50px;
-      border-radius: 25px;
+      height: 48px;
+      border-radius: 24px;
       border: none;
       background: linear-gradient(135deg, #0284c7, #0369a1);
       color: #ffffff;
-      font-size: 1rem;
+      font-size: 0.98rem;
       font-weight: 700;
       cursor: pointer;
       box-shadow: 0 6px 16px rgba(2, 132, 199, 0.3);
@@ -527,12 +547,12 @@
 
     .secondary-modal-btn {
       width: 100%;
-      height: 46px;
-      border-radius: 23px;
+      height: 44px;
+      border-radius: 22px;
       border: 1px solid rgba(148, 163, 184, 0.3);
       background: var(--bg-pill);
       color: var(--text-primary);
-      font-size: 0.96rem;
+      font-size: 0.94rem;
       font-weight: 700;
       cursor: pointer;
     }
@@ -541,21 +561,21 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 4px;
+      padding: 8px 4px;
       border-bottom: 1px solid rgba(148, 163, 184, 0.15);
     }
 
     .setting-label {
-      font-size: 0.98rem;
+      font-size: 0.94rem;
       font-weight: 600;
     }
 
     .toggle-switch {
       position: relative;
-      width: 50px;
-      height: 28px;
+      width: 48px;
+      height: 26px;
       background: #cbd5e1;
-      border-radius: 14px;
+      border-radius: 13px;
       border: none;
       cursor: pointer;
       transition: background 0.2s ease;
@@ -569,8 +589,8 @@
       position: absolute;
       top: 3px;
       left: 3px;
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       background: #ffffff;
       border-radius: 50%;
       transition: transform 0.2s ease;
@@ -580,7 +600,6 @@
       transform: translateX(22px);
     }
 
-    /* Level Selector Grid & Direct Jump */
     .level-jump-bar {
       display: flex;
       gap: 8px;
@@ -588,18 +607,18 @@
 
     .level-input {
       flex: 1;
-      height: 42px;
+      height: 40px;
       border-radius: 12px;
       border: 1px solid rgba(148, 163, 184, 0.35);
       background: var(--bg-pill);
       color: var(--text-primary);
       padding: 0 12px;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 600;
     }
 
     .level-go-btn {
-      height: 42px;
+      height: 40px;
       padding: 0 16px;
       border-radius: 12px;
       border: none;
@@ -613,19 +632,19 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      max-height: 220px;
+      max-height: 200px;
       overflow-y: auto;
       padding: 4px 2px;
     }
 
     .lvl-cell-btn {
-      height: 44px;
-      border-radius: 12px;
+      height: 42px;
+      border-radius: 10px;
       border: 1px solid rgba(148, 163, 184, 0.22);
       background: var(--bg-pill);
       color: var(--text-primary);
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       cursor: pointer;
       display: flex;
       flex-direction: column;
@@ -641,7 +660,7 @@
     }
 
     .lvl-cell-btn span {
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       font-weight: 500;
       opacity: 0.8;
     }
@@ -651,7 +670,7 @@
   <div id="app">
     <!-- Top Header -->
     <header class="top-header">
-      <h1 class="game-banner-title">Find the<br>Free Path</h1>
+      <h1 class="game-banner-title">Find the Free Path</h1>
 
       <div class="nav-row">
         <button class="icon-btn" id="btnOpenLevels" title="Select Level" aria-label="Select Level">
@@ -946,13 +965,11 @@
       {
         name: "Tropical Leaf",
         test: (x, y) => {
-          // Rotated leaf with stem at bottom-right matching Screenshot 1
           const u = (x - y) * 0.7071;
           const v = (x + y) * 0.7071;
           if (v > 0.55 && v < 0.95 && Math.abs(u) < 0.11) return true;
           const leafWidth = 0.62 * (1 - v * v) * (1 - 0.22 * v);
           if (v >= -0.88 && v <= 0.68 && Math.abs(u) <= leafWidth) {
-            // Subtle side serrations
             const notch = Math.sin(v * 11) * 0.05;
             return Math.abs(u) <= leafWidth + notch;
           }
@@ -1132,7 +1149,6 @@
     ];
 
     function getShapeIndexForLevel(levelNumber) {
-      // Ensure Level 1 and Level 42 showcase the Classic Heart, Level 2 shows Tropical Leaf
       if (levelNumber === 1 || levelNumber === 42) return 0;
       if (levelNumber === 2) return 1;
       return (levelNumber * 7 + 3) % SHAPES.length;
@@ -1141,19 +1157,19 @@
     function getLevelConfig(levelNumber) {
       let gridSize, difficulty, maxWalkLen;
       if (levelNumber <= 5) {
-        gridSize = 10 + Math.floor((levelNumber - 1) / 2); // 10..12
+        gridSize = 10 + Math.floor((levelNumber - 1) / 2);
         difficulty = "Easy";
         maxWalkLen = 10;
       } else if (levelNumber <= 20) {
-        gridSize = 14 + Math.floor((levelNumber - 6) / 4); // 14..17
+        gridSize = 14 + Math.floor((levelNumber - 6) / 4);
         difficulty = "Medium";
         maxWalkLen = 14;
       } else if (levelNumber <= 45) {
-        gridSize = 19 + Math.floor((levelNumber - 21) / 6); // 19..23
+        gridSize = 19 + Math.floor((levelNumber - 21) / 6);
         difficulty = "Hard";
         maxWalkLen = 18;
       } else {
-        gridSize = Math.min(25, 22 + (levelNumber % 4)); // 22..25
+        gridSize = Math.min(25, 22 + (levelNumber % 4));
         difficulty = "Expert";
         maxWalkLen = 20;
       }
@@ -1176,7 +1192,6 @@
       const shapeIdx = getShapeIndexForLevel(levelNumber);
       const shapeDef = SHAPES[shapeIdx];
 
-      // 1. Carve raw boolean silhouette mask
       const mask = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
       for (let r = 0; r < gridSize; r++) {
         for (let c = 0; c < gridSize; c++) {
@@ -1188,10 +1203,8 @@
         }
       }
 
-      // 2. Morphological cleanup: ensure no isolated 1-cell islands exist
       cleanMask(mask, gridSize);
 
-      // Keep track of remaining unpeeled cells in the mask
       const rem = Array.from({ length: gridSize }, (_, r) =>
         Array.from({ length: gridSize }, (_, c) => mask[r][c])
       );
@@ -1215,13 +1228,10 @@
         return true;
       };
 
-      // Constructive Reverse-Peel loop:
-      // Each arrow peeled at step k has a clear exit ray against all remaining cells (steps >= k).
       const arrows = [];
       let arrowIdCounter = 1;
 
       while (true) {
-        // Collect all valid boundary head candidates (r, c, d)
         const alignedCandidates = [];
         const bentCandidates = [];
 
@@ -1246,9 +1256,7 @@
 
         if (alignedCandidates.length === 0 && bentCandidates.length === 0) break;
 
-        // Prefer aligned neck candidates so the arrowhead aligns with the final segment
         const pool = alignedCandidates.length > 0 ? alignedCandidates : bentCandidates;
-        // Prioritize candidates that touch low-degree cells to avoid leaving 1-cell orphans
         pool.sort((a, b) => {
           const degA = countNeighbors(a.r, a.c);
           const degB = countNeighbors(b.r, b.c);
@@ -1258,7 +1266,6 @@
         const topSlice = Math.max(1, Math.min(pool.length, Math.ceil(pool.length * 0.35)));
         const chosen = pool[Math.floor(rng() * topSlice)];
 
-        // Walk backward from head (chosen.r, chosen.c) to build the winding arrow body
         const headToTail = [{ r: chosen.r, c: chosen.c }];
         rem[chosen.r][chosen.c] = false;
 
@@ -1273,7 +1280,6 @@
             const nr = curr.r + nd.dy;
             const nc = curr.c + nd.dx;
             if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize && rem[nr][nc]) {
-              // For the very first backward step, strongly prefer stepping opposite to arrowhead direction
               const isAlignedFirstStep =
                 step === 1 && nd.dx === -chosen.d.dx && nd.dy === -chosen.d.dy;
               const isStraightContinue =
@@ -1282,9 +1288,9 @@
 
               let weight = 10;
               if (isAlignedFirstStep) weight += 120;
-              if (deg === 0) weight += 200; // Immediately absorb degree-0 orphan
+              if (deg === 0) weight += 200;
               else if (deg === 1) weight += 45;
-              if (isStraightContinue) weight += 18; // Long straight runs + crisp 90° turns
+              if (isStraightContinue) weight += 18;
 
               validNext.push({ r: nr, c: nc, nd, weight });
             }
@@ -1292,7 +1298,6 @@
 
           if (validNext.length === 0) break;
 
-          // Weighted random selection
           const totalWeight = validNext.reduce((acc, item) => acc + item.weight, 0);
           let pick = rng() * totalWeight;
           let picked = validNext[0];
@@ -1309,7 +1314,6 @@
           prevStepDir = picked.nd;
         }
 
-        // Convert headToTail into ordered [tail ... head]
         const cells = headToTail.slice().reverse();
         arrows.push({
           id: arrowIdCounter++,
@@ -1319,8 +1323,6 @@
         });
       }
 
-      // 3. Post-process any 1-cell arrows: merge them into the tail of an earlier-peeled arrow if adjacent,
-      // or drop isolated 1-cell dust so every multi-segment arrow looks sleek and authentic.
       const cellOwner = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
       arrows.forEach((ar) => {
         ar.cells.forEach((pt) => {
@@ -1333,7 +1335,6 @@
         if (ar.cells.length >= 2) {
           finalArrows.push(ar);
         } else {
-          // Single cell at ar.cells[0]: try to attach to the tail of an arrow with a LOWER peelIndex
           const pt = ar.cells[0];
           let merged = false;
           for (const d of DIRS) {
@@ -1357,28 +1358,38 @@
             }
           }
           if (!merged) {
-            // Remove tiny 1-cell speck from occupancy so every arrow on the board is >= 2 cells
             cellOwner[pt.r][pt.c] = null;
           }
         }
       }
 
-      // Ensure each arrow's direction matches its final segment [neck -> head] whenever that ray was also clear,
-      // or build the smooth visual polyline with a head turn so the arrowhead unmistakably points in ar.dir.
+      // Compute exact tight bounding box of active cells so board centers & scales with zero side clipping
+      let minR = gridSize, maxR = 0, minC = gridSize, maxC = 0;
       finalArrows.forEach((ar, idx) => {
         ar.id = idx + 1;
         ar.escaped = false;
         ar.slideOffset = 0;
-        ar.state = 'idle'; // 'idle' | 'escaping' | 'colliding' | 'rebounding'
+        ar.state = 'idle';
         ar.errorTimer = 0;
         ar.hintTimer = 0;
         ar.maxSlide = gridSize + ar.cells.length + 3;
         buildArrowPolyline(ar);
+        ar.cells.forEach((c) => {
+          if (c.r < minR) minR = c.r;
+          if (c.r > maxR) maxR = c.r;
+          if (c.c < minC) minC = c.c;
+          if (c.c > maxC) maxC = c.c;
+        });
       });
+
+      if (minR > maxR) {
+        minR = 0; maxR = gridSize - 1; minC = 0; maxC = gridSize - 1;
+      }
 
       return {
         levelNumber,
         gridSize,
+        bounds: { minR, maxR, minC, maxC },
         difficulty,
         shapeName: shapeDef.name,
         arrows: finalArrows,
@@ -1391,7 +1402,6 @@
     }
 
     function cleanMask(mask, n) {
-      // Remove isolated cells with 0 orthogonal neighbors
       let changed = true;
       while (changed) {
         changed = false;
@@ -1412,14 +1422,12 @@
       }
     }
 
-    // Builds continuous grid-coordinate track points from tail to arrowhead tip
     function buildArrowPolyline(arrow) {
       const pts = arrow.cells.map((cell) => ({
         x: cell.c + 0.5,
         y: cell.r + 0.5
       }));
 
-      // Shorten the tail slightly inside the first cell for clean spacing
       if (pts.length >= 2) {
         const dx0 = pts[1].x - pts[0].x;
         const dy0 = pts[1].y - pts[0].y;
@@ -1429,28 +1437,23 @@
         };
       }
 
-      // Extend the head slightly in arrow.dir so even if the final bend happens inside the head cell,
-      // the arrowhead has a crisp neck pointing in arrow.dir
       const last = pts[pts.length - 1];
       const prev = pts[pts.length - 2];
       const neckDx = last.x - prev.x;
       const neckDy = last.y - prev.y;
 
       if (Math.sign(neckDx) === arrow.dir.dx && Math.sign(neckDy) === arrow.dir.dy) {
-        // Straight neck aligned with exit direction
         pts[pts.length - 1] = {
           x: last.x + arrow.dir.dx * 0.16,
           y: last.y + arrow.dir.dy * 0.16
         };
       } else {
-        // 90-degree hook inside the head cell pointing outward in arrow.dir
         pts.push({
           x: last.x + arrow.dir.dx * 0.26,
           y: last.y + arrow.dir.dy * 0.26
         });
       }
 
-      // Compute cumulative arc length along trackPoints
       let totalLen = 0;
       const cumLen = [0];
       for (let i = 1; i < pts.length; i++) {
@@ -1478,7 +1481,6 @@
       darkTheme: false,
       loupeEnabled: true,
       levelData: null,
-      particles: [],
       shockwaves: [],
       boardShake: 0,
       pointer: {
@@ -1536,7 +1538,6 @@
       document.getElementById('hintBadge').textContent = state.hints;
     }
 
-    // Build dynamic 2D occupancy map of active (non-escaped) arrows
     function buildOccupancyGrid() {
       const n = state.levelData.gridSize;
       const grid = Array.from({ length: n }, () => Array(n).fill(null));
@@ -1549,7 +1550,6 @@
       return grid;
     }
 
-    // Check straight-line exit ray from arrowhead in its pointing direction
     function checkArrowExitRay(arrow, occGrid) {
       const n = state.levelData.gridSize;
       const head = arrow.cells[arrow.cells.length - 1];
@@ -1581,21 +1581,18 @@
       const rayResult = checkArrowExitRay(arrow, occ);
 
       if (rayResult.free) {
-        // Free path! Smoothly slither forward along its track and exit screen
         arrow.state = 'escaping';
         arrow.hintTimer = 0;
         sfx.playSlither();
         sfx.vibrate(12);
         updateRemainingUI(true);
       } else {
-        // Blocked! Slide forward into blocker, flash red, shake board, lose 1 heart
         arrow.state = 'colliding';
         arrow.targetCollideOffset = Math.min(0.55, rayResult.freeSteps + 0.36);
         arrow.errorTimer = 1.0;
         state.boardShake = 8;
         sfx.playCollision();
 
-        // Spawn shockwave at collision point
         state.shockwaves.push({
           gx: rayResult.hitCell.c + 0.5 - arrow.dir.dx * 0.35,
           gy: rayResult.hitCell.r + 0.5 - arrow.dir.dy * 0.35,
@@ -1664,16 +1661,16 @@
 
       renderHeartsUI(false);
       updateRemainingUI(false);
+      resizeCanvas();
       saveProgress();
     }
 
     /*************************************************************************
-     * 6. HINT SYSTEM (Highlights a Guaranteed Free Arrow + Exit Ray)
+     * 6. HINT SYSTEM
      *************************************************************************/
     function useHint() {
       if (!state.levelData) return;
       if (state.hints <= 0) {
-        // Refill 2 bonus hints so player is never stuck
         state.hints = 2;
       }
 
@@ -1686,46 +1683,79 @@
         state.hints = Math.max(0, state.hints - 1);
         document.getElementById('hintBadge').textContent = state.hints;
         const target = freeArrows[0];
-        target.hintTimer = 3.5; // Pulse emerald green for 3.5 seconds
+        target.hintTimer = 3.5;
         sfx.playHint();
         saveProgress();
       }
     }
 
     /*************************************************************************
-     * 7. HTML5 CANVAS RENDERER, TRACK SLITHERING & 2.2x MAGNIFIER LOUPE
+     * 7. RESPONSIVE FULLSCREEN CANVAS SCALING & LOUPE
      *************************************************************************/
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let boardMetrics = { x: 0, y: 0, size: 300, cellSize: 20 };
+    const boardWrapper = document.getElementById('boardWrapper');
+    let boardMetrics = { width: 300, height: 300, x: 0, y: 0, size: 260, cellSize: 20 };
 
     function resizeCanvas() {
-      const wrapper = document.getElementById('boardWrapper');
-      const rect = wrapper.getBoundingClientRect();
+      const rect = boardWrapper.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const pad = 26;
-      const minDim = Math.max(120, Math.min(rect.width - pad * 2, rect.height - pad * 2));
       const n = state.levelData ? state.levelData.gridSize : 14;
-      const cellSize = minDim / n;
+      // Extra margin around board so outer arrowheads on left/right/top/bottom never clip in fullscreen
+      const safeMargin = Math.max(24, Math.min(rect.width, rect.height) * 0.08);
+      const availW = Math.max(100, rect.width - safeMargin * 2);
+      const availH = Math.max(100, rect.height - safeMargin * 2);
+
+      // Add +1.5 virtual cells of breathing space so outward-pointing arrowheads stay 100% inside
+      const cellSize = Math.min(availW / (n + 1.2), availH / (n + 1.2));
       const boardSize = cellSize * n;
+
+      // Center active silhouette bounds inside wrapper
+      let offsetX = (rect.width - boardSize) / 2;
+      let offsetY = (rect.height - boardSize) / 2;
+
+      if (state.levelData && state.levelData.bounds) {
+        const { minR, maxR, minC, maxC } = state.levelData.bounds;
+        const shapeCenterC = (minC + maxC + 1) / 2;
+        const shapeCenterR = (minR + maxR + 1) / 2;
+        offsetX = rect.width / 2 - shapeCenterC * cellSize;
+        offsetY = rect.height / 2 - shapeCenterR * cellSize;
+      }
 
       boardMetrics = {
         width: rect.width,
         height: rect.height,
-        x: (rect.width - boardSize) / 2,
-        y: (rect.height - boardSize) / 2,
+        x: offsetX,
+        y: offsetY,
         size: boardSize,
         cellSize
       };
     }
 
-    window.addEventListener('resize', resizeCanvas);
+    // Automatically re-measure on window resize, fullscreen transitions, and wrapper resize
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      setTimeout(resizeCanvas, 120);
+      setTimeout(resizeCanvas, 300);
+    });
 
-    // Sample point along an arrow's extended track (original polyline + straight exit ray) at arc distance `d`
+    document.addEventListener('fullscreenchange', () => {
+      resizeCanvas();
+      setTimeout(resizeCanvas, 150);
+      setTimeout(resizeCanvas, 350);
+    });
+
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => resizeCanvas());
+      ro.observe(boardWrapper);
+    }
+
     function sampleArrowTrack(arrow, d) {
       const pts = arrow.trackPoints;
       const cum = arrow.cumLen;
@@ -1754,7 +1784,6 @@
       return pts[pts.length - 1];
     }
 
-    // Extract the sub-polyline of an arrow for arc interval [s, s + totalArcLen]
     function getSlitheredPolyline(arrow) {
       const s = arrow.slideOffset;
       if (s === 0) return arrow.trackPoints;
@@ -1778,7 +1807,6 @@
       return result;
     }
 
-    // Render the board inside any given 2D context (used for main board AND inside the 2.2x Loupe)
     function renderBoardScene(targetCtx, metrics, isLoupe = false) {
       if (!state.levelData) return;
       const styles = getComputedStyle(document.body);
@@ -1794,14 +1822,12 @@
 
       targetCtx.save();
 
-      // Apply screen shake when a collision occurs
       if (!isLoupe && state.boardShake > 0.2) {
         const sx = (Math.random() - 0.5) * state.boardShake;
         const sy = (Math.random() - 0.5) * state.boardShake;
         targetCtx.translate(sx, sy);
       }
 
-      // 1. Optional Alignment Grid & Ray Guides (# toggle button)
       if (state.showGridGuides || isLoupe) {
         targetCtx.strokeStyle = gridColor;
         targetCtx.lineWidth = 1;
@@ -1834,9 +1860,8 @@
         targetCtx.setLineDash([]);
       }
 
-      // 2. Draw all active Bent Arrows
-      const strokeW = Math.max(2.2, cs * 0.21);
-      const headSize = Math.max(5.5, cs * 0.42);
+      const strokeW = Math.max(2.0, cs * 0.21);
+      const headSize = Math.max(5.0, cs * 0.42);
 
       for (const ar of state.levelData.arrows) {
         if (ar.escaped) continue;
@@ -1855,7 +1880,6 @@
           extraWidth = 1.0;
         }
 
-        // Draw animated hint exit ray if hinted
         if (ar.hintTimer > 0) {
           const headPt = ar.trackPoints[ar.trackPoints.length - 1];
           const hx = bx + headPt.x * cs;
@@ -1878,8 +1902,6 @@
         const tip = poly[poly.length - 1];
         const tipX = bx + tip.x * cs;
         const tipY = by + tip.y * cs;
-
-        // Shorten visual shaft slightly before tip so arrowhead triangle is crisp
         const shaftEndOffset = headSize * 0.55;
 
         targetCtx.strokeStyle = color;
@@ -1899,7 +1921,6 @@
         );
         targetCtx.stroke();
 
-        // Draw sharp directional arrowhead at leading end
         const angle = Math.atan2(ar.dir.dy, ar.dir.dx);
         targetCtx.save();
         targetCtx.translate(tipX, tipY);
@@ -1914,7 +1935,6 @@
         targetCtx.restore();
       }
 
-      // 3. Draw Collision Shockwaves
       for (const sw of state.shockwaves) {
         targetCtx.save();
         targetCtx.strokeStyle = arrowErrorColor;
@@ -1929,35 +1949,31 @@
       targetCtx.restore();
     }
 
-    // Render floating 2.2x Magnifier Loupe matching Screenshot 2
     function renderMagnifierLoupe() {
       if (!state.pointer.down || !state.pointer.loupeActive || !state.loupeEnabled) return;
 
       const px = state.pointer.x;
       const py = state.pointer.y;
-      const loupeRadius = 76;
+      const loupeRadius = Math.min(74, Math.min(boardMetrics.width, boardMetrics.height) * 0.22);
       const zoom = 2.2;
 
-      // Position loupe offset above finger/cursor, flipping downward if near top edge
       let lx = px;
-      let ly = py - 102;
-      if (ly - loupeRadius < 10) {
-        ly = py + 102;
+      let ly = py - (loupeRadius + 28);
+      if (ly - loupeRadius < 8) {
+        ly = py + (loupeRadius + 28);
       }
-      lx = Math.max(loupeRadius + 10, Math.min(boardMetrics.width - loupeRadius - 10, lx));
+      lx = Math.max(loupeRadius + 8, Math.min(boardMetrics.width - loupeRadius - 8, lx));
 
       ctx.save();
 
-      // Outer drop shadow + white ring frame
       ctx.shadowColor = 'rgba(15, 23, 42, 0.28)';
       ctx.shadowBlur = 24;
       ctx.shadowOffsetY = 8;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(lx, ly, loupeRadius + 8, 0, Math.PI * 2);
+      ctx.arc(lx, ly, loupeRadius + 7, 0, Math.PI * 2);
       ctx.fill();
 
-      // Clip inside circular lens
       ctx.shadowColor = 'transparent';
       ctx.beginPath();
       ctx.arc(lx, ly, loupeRadius, 0, Math.PI * 2);
@@ -1967,7 +1983,6 @@
       ctx.fillStyle = bgMain;
       ctx.fillRect(lx - loupeRadius, ly - loupeRadius, loupeRadius * 2, loupeRadius * 2);
 
-      // Transform around pointer coordinate (px, py) by 2.2x zoom
       ctx.translate(lx, ly);
       ctx.scale(zoom, zoom);
       ctx.translate(-px, -py);
@@ -1976,7 +1991,6 @@
 
       ctx.restore();
 
-      // Subtle inner lens border and center target crosshair
       ctx.save();
       ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
       ctx.lineWidth = 1.5;
@@ -2017,7 +2031,7 @@
           }
 
           if (ar.state === 'escaping') {
-            ar.slideOffset += dt * 28; // Fast smooth slither along track
+            ar.slideOffset += dt * 28;
             if (ar.slideOffset >= ar.maxSlide) {
               ar.escaped = true;
               ar.state = 'idle';
@@ -2064,7 +2078,6 @@
       const row = Math.floor(gy);
       const n = state.levelData.gridSize;
 
-      // Exact grid cell check first
       if (row >= 0 && row < n && col >= 0 && col < n) {
         for (const ar of state.levelData.arrows) {
           if (ar.escaped || ar.state === 'escaping') continue;
@@ -2074,9 +2087,8 @@
         }
       }
 
-      // Nearest segment tolerance (within 0.65 cell radius) for smooth mobile tapping
       let bestArrow = null;
-      let bestDist = 0.65;
+      let bestDist = 0.68;
       for (const ar of state.levelData.arrows) {
         if (ar.escaped || ar.state === 'escaping') continue;
         for (const cell of ar.cells) {
@@ -2184,10 +2196,20 @@
 
       if (!state.levelData) return;
       const n = state.levelData.gridSize;
-      const pad = 14;
-      const cs = (size - pad * 2) / n;
+      const pad = 16;
+      const cs = (size - pad * 2) / (n + 0.8);
       const strokeW = Math.max(1.8, cs * 0.2);
       const headSize = Math.max(4.5, cs * 0.42);
+
+      let offsetX = pad;
+      let offsetY = pad;
+      if (state.levelData.bounds) {
+        const { minR, maxR, minC, maxC } = state.levelData.bounds;
+        const shapeCenterC = (minC + maxC + 1) / 2;
+        const shapeCenterR = (minR + maxR + 1) / 2;
+        offsetX = size / 2 - shapeCenterC * cs;
+        offsetY = size / 2 - shapeCenterR * cs;
+      }
 
       sCtx.strokeStyle = '#0f1b33';
       sCtx.fillStyle = '#0f1b33';
@@ -2199,14 +2221,14 @@
         const poly = ar.trackPoints;
         if (poly.length < 2) continue;
         const tip = poly[poly.length - 1];
-        const tipX = pad + tip.x * cs;
-        const tipY = pad + tip.y * cs;
+        const tipX = offsetX + tip.x * cs;
+        const tipY = offsetY + tip.y * cs;
         const shaftEndOffset = headSize * 0.55;
 
         sCtx.beginPath();
-        sCtx.moveTo(pad + poly[0].x * cs, pad + poly[0].y * cs);
+        sCtx.moveTo(offsetX + poly[0].x * cs, offsetY + poly[0].y * cs);
         for (let i = 1; i < poly.length - 1; i++) {
-          sCtx.lineTo(pad + poly[i].x * cs, pad + poly[i].y * cs);
+          sCtx.lineTo(offsetX + poly[i].x * cs, offsetY + poly[i].y * cs);
         }
         sCtx.lineTo(tipX - ar.dir.dx * shaftEndOffset, tipY - ar.dir.dy * shaftEndOffset);
         sCtx.stroke();
@@ -2257,7 +2279,6 @@
       const h = burstCanvas.height;
       burstCtx.clearRect(0, 0, w, h);
 
-      // Rotating light-blue radial burst rays behind the snapshot card
       const cx = w / 2;
       const cy = h * 0.48;
       const maxR = Math.hypot(w, h);
@@ -2279,7 +2300,6 @@
       }
       burstCtx.restore();
 
-      // Falling colorful confetti rectangles
       for (const p of confettiPieces) {
         p.x += p.vx;
         p.y += p.vy;
@@ -2328,7 +2348,6 @@
       startLevel(state.levelNumber);
     });
 
-    // Level Selector Modal
     function openLevelModal() {
       const grid = document.getElementById('levelGrid');
       grid.innerHTML = '';
@@ -2363,7 +2382,6 @@
       }
     });
 
-    // Settings Modal
     document.getElementById('btnOpenSettings').addEventListener('click', () => {
       document.getElementById('settingsModal').classList.add('open');
     });
